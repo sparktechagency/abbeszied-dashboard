@@ -87,6 +87,15 @@ const Sidebar = ({ isCollapsed }) => {
       ],
     },
     {
+      key: "/pending-products",
+      icon: <PiWallet size={25} />,
+      label: isCollapsed ? (
+        <Link to="/pending-products">Pending Products</Link>
+      ) : (
+        <Link to="/pending-products">Pending Products</Link>
+      ),
+    },
+    {
       key: "/certificate-review",
       icon: <PiCertificateBold size={25} />,
       label: isCollapsed ? (

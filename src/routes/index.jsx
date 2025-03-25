@@ -34,6 +34,7 @@ import CorporateList from "../Pages/Dashboard/CorporateList/CorporateList.jsx";
 import CertificateList from "../Pages/Dashboard/CertificateReview/CertificateList.jsx";
 import Category from "../Pages/Dashboard/Categoty/Category.jsx";
 import Users from "../Pages/Dashboard/User/Users.jsx";
+import PendingProducts from "../Pages/Dashboard/PendingProducts/PendingProducts.jsx";
 
 const router = createBrowserRouter([
   {
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
       {
         path: "/booking-list",
         element: <BookingList />,
+      },
+      {
+        path: "/pending-products",
+        element: <PendingProducts />,
       },
       {
         path: "/support-chat",
