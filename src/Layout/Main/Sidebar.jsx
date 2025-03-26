@@ -9,7 +9,7 @@ import { Menu } from "antd";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LuClipboardList } from "react-icons/lu";
-import { TbBellBolt } from "react-icons/tb";
+import { TbBellBolt, TbPackages } from "react-icons/tb";
 import { HiOutlineUsers } from "react-icons/hi";
 import { RxDashboard } from "react-icons/rx";
 import {
@@ -24,6 +24,9 @@ import logo from "../../assets/logo.png";
 import minilogo from "../../assets/minilogo.png";
 import { MdOutlinePrivacyTip } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
+import { FaBuffer } from "react-icons/fa";
+import { ImProfile } from "react-icons/im";
+import { TfiLayoutSlider, TfiLayoutSliderAlt } from "react-icons/tfi";
 
 const Sidebar = ({ isCollapsed }) => {
   const location = useLocation();
@@ -88,11 +91,20 @@ const Sidebar = ({ isCollapsed }) => {
     },
     {
       key: "/pending-products",
-      icon: <PiWallet size={25} />,
+      icon: <FaBuffer size={25} />,
       label: isCollapsed ? (
         <Link to="/pending-products">Pending Products</Link>
       ) : (
         <Link to="/pending-products">Pending Products</Link>
+      ),
+    },
+    {
+      key: "/product-list",
+      icon: <TbPackages size={25} />,
+      label: isCollapsed ? (
+        <Link to="/product-list">Product Lists</Link>
+      ) : (
+        <Link to="/product-list">Product List</Link>
       ),
     },
     {
@@ -177,6 +189,45 @@ const Sidebar = ({ isCollapsed }) => {
             </Link>
           ),
         },
+        {
+          key: "/about-us",
+          icon: <ImProfile size={24} />,
+          label: (
+            <Link to="/about-us" className="text-white hover:text-white">
+              About Us
+            </Link>
+          ),
+        },
+        {
+          key: "/slider",
+          icon: <TfiLayoutSlider size={24} />,
+          label: (
+            <Link to="/slider" className="text-white hover:text-white">
+              Slider
+            </Link>
+          ),
+        },
+        {
+          key: "/coach-slider",
+          icon: <TfiLayoutSliderAlt size={24} />,
+          label: (
+            <Link to="/coach-slider" className="text-white hover:text-white">
+              Coach Slider
+            </Link>
+          ),
+        },
+        {
+          key: "/corporate-slider",
+          icon: <TfiLayoutSliderAlt size={24} />,
+          label: (
+            <Link
+              to="/corporate-slider"
+              className="text-white hover:text-white"
+            >
+              Corporate Slider
+            </Link>
+          ),
+        },
       ],
     },
 
@@ -231,7 +282,7 @@ const Sidebar = ({ isCollapsed }) => {
 
   return (
     <div
-      className={`bg-quilocoP h-full shadow-md transition-all duration-300  overflow-auto ${
+      className={`bg-quilocoP h-full shadow-md transition-all duration-300 ${
         isCollapsed ? "w-[80px]" : "w-[280px]"
       }`}
     >
@@ -250,14 +301,24 @@ const Sidebar = ({ isCollapsed }) => {
           {/* <img src={logo} /> */}
         </div>
       </Link>
-
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        style={{ background: "#ffffff" }}
-        items={menuItems}
-        className="text-white mt-10 "
-      />
+      <div
+        className=" h-[80%]  overflow-y-auto
+  [&::-webkit-scrollbar]:w-0
+  [&::-webkit-scrollbar-track]:rounded-full
+  [&::-webkit-scrollbar-track]:bg-gray-100
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:bg-gray-300
+  dark:[&::-webkit-scrollbar-track]:bg-neutral-700
+  dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500"
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          style={{ background: "#ffffff" }}
+          items={menuItems}
+          className="text-white mt-10 "
+        />
+      </div>
     </div>
   );
 };

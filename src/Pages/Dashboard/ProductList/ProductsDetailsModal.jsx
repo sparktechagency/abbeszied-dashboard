@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaPhone, FaClock, FaTimes, FaCheck } from "react-icons/fa";
-import { Button, ConfigProvider } from "antd";
+import { Button, ConfigProvider, message } from "antd";
 import shoe from "../../../assets/shoe.png"; // You can use a default image if necessary
 import sneakers1 from "../../../assets/sneakers1.png";
 import sneakers2 from "../../../assets/sneakers2.png";
 import sneakers3 from "../../../assets/sneakers3.png";
 
-const PendingProductsModal = ({ isModalOpen, handleCancel, providerData }) => {
+const ProductsDetailsModal = ({ isModalOpen, handleCancel, providerData }) => {
   const fallbackImages = [sneakers1, sneakers2, sneakers3];
 
   const [mainImage, setMainImage] = useState(shoe);
@@ -157,4 +157,4 @@ const PendingProductsModal = ({ isModalOpen, handleCancel, providerData }) => {
   );
 };
 
-export default PendingProductsModal;
+export default ProductsDetailsModal;

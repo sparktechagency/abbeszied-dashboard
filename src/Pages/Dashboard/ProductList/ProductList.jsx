@@ -4,10 +4,12 @@ import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import { LuX, LuCheck } from "react-icons/lu";
 import shoe from "../../../assets/shoe.png";
-import PendingProductsModal from "./PendingProductsModal";
-import { FaRegEye } from "react-icons/fa";
 
-function PendingProducts() {
+import { FaRegEye } from "react-icons/fa";
+import ProductsDetailsModal from "./ProductsDetailsModal";
+import { RiDeleteBin6Line } from "react-icons/ri";
+
+function ProductList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [userData, setUserData] = useState(data);
@@ -103,7 +105,7 @@ function PendingProducts() {
 
       <Table
         rowSelection={rowSelection}
-        columns={columns(handleModalOpen)} // Pass handleModalOpen to the columns
+        columns={columns(handleModalOpen)}
         dataSource={filteredData}
         pagination={{
           defaultPageSize: 5,
@@ -116,16 +118,16 @@ function PendingProducts() {
       />
 
       {/* Modal */}
-      <PendingProductsModal
+      <ProductsDetailsModal
         isModalOpen={isModalOpen}
-        handleCancel={() => setIsModalOpen(false)} // Close the modal
-        providerData={selectedProvider} // Pass selected product data
+        handleCancel={() => setIsModalOpen(false)}
+        providerData={selectedProvider}
       />
     </ConfigProvider>
   );
 }
 
-export default PendingProducts;
+export default ProductList;
 
 const columns = (handleModalOpen) => [
   {
@@ -159,10 +161,25 @@ const columns = (handleModalOpen) => [
     key: "price",
   },
   {
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
+    width: "15%",
+    render: (_, record) => (
+      <span
+        className={`text-${
+          record.status === "Available" ? "green-500" : "red-500"
+        }`}
+      >
+        {record.status}
+      </span>
+    ),
+  },
+  {
     title: "Action",
     dataIndex: "action",
     key: "action",
-    render: (text, record) => (
+    render: (_, record) => (
       <div className="flex items-center gap-3">
         <Tooltip title="View">
           <FaRegEye
@@ -171,11 +188,11 @@ const columns = (handleModalOpen) => [
             onClick={() => handleModalOpen(record)} // Open modal on click
           />
         </Tooltip>
-        <Tooltip title="Approve">
-          <LuCheck size={25} className="hover:text-green-500 cursor-pointer" />
-        </Tooltip>
-        <Tooltip title="Reject">
-          <LuX size={25} className="hover:text-red-500 cursor-pointer" />
+        <Tooltip title="Delete">
+          <RiDeleteBin6Line
+            size={25}
+            className="hover:text-red-500 cursor-pointer"
+          />
         </Tooltip>
       </div>
     ),
@@ -189,7 +206,7 @@ const data = [
     category: "shoe",
     submittedBy: "Ahmed Khalil",
     price: `Qar${500}`,
-
+    status: "Available",
     productImage: shoe, // Dynamic image URL
   },
   {
@@ -198,7 +215,7 @@ const data = [
     category: "shoe",
     submittedBy: "Ahmed Khalil",
     price: `Qar${500}`,
-
+    status: "Sold",
     productImage: shoe, // Dynamic image URL
   },
   {
@@ -207,8 +224,8 @@ const data = [
     category: "shoe",
     submittedBy: "Ahmed Khalil",
     price: `Qar${500}`,
-
-    productImage: shoe, // Dynamic image URL
+    status: "Available",
+    productImage: shoe,
   },
   {
     key: 4,
@@ -216,17 +233,8 @@ const data = [
     category: "shoe",
     submittedBy: "Ahmed Khalil",
     price: `Qar${500}`,
-
-    productImage: shoe, // Dynamic image URL
-  },
-  {
-    key: 4,
-    productName: "Men's Nike Air Zoom Pegasus 38",
-    category: "shoe",
-    submittedBy: "Ahmed Khalil",
-    price: `Qar${500}`,
-
-    productImage: shoe, // Dynamic image URL
+    status: "Sold",
+    productImage: shoe,
   },
   {
     key: 5,
@@ -234,7 +242,16 @@ const data = [
     category: "shoe",
     submittedBy: "Ahmed Khalil",
     price: `Qar${500}`,
-
-    productImage: shoe, // Dynamic image URL
+    status: "Available",
+    productImage: shoe,
+  },
+  {
+    key: 6,
+    productName: "Men's Nike Air Zoom Pegasus 38",
+    category: "shoe",
+    submittedBy: "Ahmed Khalil",
+    price: `Qar${500}`,
+    status: "Sold",
+    productImage: shoe,
   },
 ];
