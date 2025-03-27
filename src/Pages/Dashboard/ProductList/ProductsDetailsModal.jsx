@@ -113,45 +113,6 @@ const ProductsDetailsModal = ({ isModalOpen, handleCancel, providerData }) => {
             </div>
           </div>
         </div>
-
-        {/* Approve & Reject Buttons */}
-        <div className="flex justify-center mt-6 space-x-4">
-          <ConfigProvider
-            theme={{
-              components: {
-                Button: {
-                  defaultHoverBg: "#16a34a  ",
-                  defaultHoverColor: "white",
-                },
-              },
-            }}
-          >
-            <Button
-              onClick={() => {}}
-              className="bg-green-500/90 hover:bg-green-600 text-white border-none h-5"
-            >
-              Accept
-            </Button>
-          </ConfigProvider>
-          <ConfigProvider
-            theme={{
-              components: {
-                Button: {
-                  defaultHoverBg: "#dc2626   ",
-                  defaultHoverColor: "white",
-                  colorPrimaryBg: "#dc2626  ",
-                },
-              },
-            }}
-          >
-            <Button
-              onClick={() => {}}
-              className="ml-4 bg-red-500/90 hover:bg-red-600 text-white border-none h-5"
-            >
-              Reject
-            </Button>
-          </ConfigProvider>
-        </div>
       </div>
     </div>
   );
