@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Collapse, Modal, Form, Input, ConfigProvider, message } from "antd";
+import {
+  Collapse,
+  Modal,
+  Form,
+  Input,
+  ConfigProvider,
+  message,
+  Button,
+} from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import FaqPopover from "../../../components/common/PopContent";
 import ButtonEDU from "../../../components/common/ButtonEDU";
@@ -8,16 +16,27 @@ const defaultText = `A dog is a type of domesticated animal. Known for its loyal
 
 // FAQ Header Component
 export const HeadFaq = ({ showModal }) => (
-  <div className="flex justify-between items-center py-5">
-    <h1 className="text-[20px] font-medium">FAQ</h1>
-    <ButtonEDU
-      className="bg-smart text-white px-4 py-2.5 rounded-md shadow-md"
-      onClick={showModal}
-    >
-      <PlusOutlined size={24} className="mr-2" />
-      Add New
-    </ButtonEDU>
-  </div>
+  <ConfigProvider
+    theme={{
+      components: {
+        Button: {
+          defaultHoverBorderColor: "#fd7d00 ",
+          defaultHoverColor: "#fd7d00 ",
+        },
+      },
+    }}
+  >
+    <div className="flex justify-between items-center py-5">
+      <h1 className="text-[20px] font-medium">FAQ</h1>
+      <Button
+        className="bg-abbes text-white px-4 py-2.5 h-9 rounded-md shadow-md"
+        onClick={showModal}
+      >
+        <PlusOutlined size={24} className="mr-2" />
+        Add New
+      </Button>
+    </div>
+  </ConfigProvider>
 );
 
 // FAQ Collapse Component

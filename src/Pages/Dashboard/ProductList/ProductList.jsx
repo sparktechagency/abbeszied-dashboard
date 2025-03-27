@@ -8,6 +8,7 @@ import shoe from "../../../assets/shoe.png";
 import { FaRegEye } from "react-icons/fa";
 import ProductsDetailsModal from "./ProductsDetailsModal";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import { CgEye } from "react-icons/cg";
 
 function ProductList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -182,7 +183,7 @@ const columns = (handleModalOpen) => [
     render: (_, record) => (
       <div className="flex items-center gap-3">
         <Tooltip title="View">
-          <FaRegEye
+          <CgEye
             size={25}
             className="hover:text-abbes cursor-pointer"
             onClick={() => handleModalOpen(record)} // Open modal on click

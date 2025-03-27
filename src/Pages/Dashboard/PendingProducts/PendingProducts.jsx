@@ -5,8 +5,8 @@ import GetPageName from "../../../components/common/GetPageName";
 import { LuX, LuCheck } from "react-icons/lu";
 import shoe from "../../../assets/shoe.png";
 import PendingProductsModal from "./PendingProductsModal";
-import { FaRegEye } from "react-icons/fa";
 
+import { CgEye, CgUndo } from "react-icons/cg";
 function PendingProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -165,7 +165,7 @@ const columns = (handleModalOpen) => [
     render: (text, record) => (
       <div className="flex items-center gap-3">
         <Tooltip title="View">
-          <FaRegEye
+          <CgEye
             size={25}
             className="hover:text-abbes cursor-pointer"
             onClick={() => handleModalOpen(record)} // Open modal on click
@@ -176,6 +176,9 @@ const columns = (handleModalOpen) => [
         </Tooltip>
         <Tooltip title="Reject">
           <LuX size={25} className="hover:text-red-500 cursor-pointer" />
+        </Tooltip>
+        <Tooltip title="Reject">
+          <CgUndo size={25} className="hover:text-red-500 cursor-pointer" />
         </Tooltip>
       </div>
     ),

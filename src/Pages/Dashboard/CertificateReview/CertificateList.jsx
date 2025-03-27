@@ -1,266 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   Table,
-//   Avatar,
-//   ConfigProvider,
-//   Input,
-//   Button,
-//   Tooltip,
-//   message,
-//   App,
-// } from "antd";
-// import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
-// import { FaRegEye } from "react-icons/fa";
-// import { LuCheck, LuX } from "react-icons/lu";
-// import man from "../../../assets/man.png";
-// import pdf from "../../../assets/pdf.png";
-// import GetPageName from "../../../components/common/GetPageName";
-// import CertificateModal from "./CertificateModal.jsx"; // Import your modal
-
-// function CertificateList() {
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-//   const [userData, setUserData] = useState(data); // Initial data
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [selectedProvider, setSelectedProvider] = useState(null);
-//   const [reject, setReject] = useState(false);
-//   const [approve, setApprove] = useState(false);
-
-//   // Search function
-//   const handleSearch = (value) => {
-//     setSearchQuery(value);
-//   };
-
-//   // Filter data based on the search query
-//   const filteredData = userData.filter(
-//     (user) =>
-//       user.coachName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//       user.phoneNumber.includes(searchQuery) ||
-//       user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//       user.spent.toLowerCase().includes(searchQuery.toLowerCase())
-//   );
-
-//   // Row selection for delete
-//   const rowSelection = {
-//     selectedRowKeys,
-//     onChange: setSelectedRowKeys, // Update selected keys on checkbox change
-//   };
-
-//   // Handle deleting selected rows
-//   const handleDeleteSelected = () => {
-//     setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
-//     setSelectedRowKeys([]); // Clear selected rows after deletion
-//   };
-
-//   // Handle edit functionality (modal opening, etc.)
-//   const handleEdit = (record) => {
-//     setSelectedProvider(record); // Store selected provider's data
-//     setIsModalOpen(true); // Open modal
-//   };
-
-//   // Handle ban functionality (toggle banned status)
-//   const handleBan = (provider) => {
-//     setUserData((prevData) =>
-//       prevData.map((user) =>
-//         user.key === provider.key ? { ...user, banned: !user.banned } : user
-//       )
-//     );
-//     alert(
-//       `${provider.coachName} has been ${
-//         provider.banned ? "unbanned" : "banned"
-//       }`
-//     );
-//   };
-
-//   return (
-//     <ConfigProvider
-//       theme={{
-//         components: {
-//           Table: {
-//             rowSelectedBg: "#f6f6f6",
-//             headerBg: "#f6f6f6",
-//             headerSplitColor: "none",
-//             headerBorderRadius: "none",
-//             cellFontSize: "16px",
-//           },
-//           Pagination: {
-//             borderRadius: "3px",
-//             itemActiveBg: "#18a0fb",
-//           },
-//           Button: {
-//             defaultHoverBg: "#fd7d00 ",
-//             defaultHoverColor: "white",
-//             defaultHoverBorderColor: "#fd7d00 ",
-//           },
-//           Input: {
-//             hoverBorderColor: "#fd7d00",
-//             activeBorderColor: "#fd7d00",
-//           },
-//         },
-//       }}
-//     >
-//       <div className="flex justify-between items-center py-5">
-//         <h1 className="text-[20px] font-medium">Coach {GetPageName()}</h1>
-//         <div className="flex gap-3">
-//           <Input
-//             placeholder="Search by Name, Email or Phone"
-//             onChange={(e) => handleSearch(e.target.value)}
-//             prefix={<SearchOutlined />}
-//             className="h-9 gap-2"
-//             allowClear
-//           />
-//           {selectedRowKeys.length > 0 && (
-//             <Button
-//               icon={<DeleteOutlined />}
-//               onClick={handleDeleteSelected}
-//               className="bg-abbes/90 hover:bg-abbes text-white border-none h-9"
-//             >
-//               Delete Selected
-//             </Button>
-//           )}
-//         </div>
-//       </div>
-
-//       <Table
-//         rowSelection={rowSelection}
-//         columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
-//         dataSource={filteredData}
-//         pagination={{
-//           defaultPageSize: 5,
-//           position: ["bottomRight"],
-//           size: "default",
-//           total: 50,
-//           showSizeChanger: true,
-//           showQuickJumper: true,
-//         }}
-//       />
-
-//       {/* Pass modal props to PendingProductsModal */}
-//       <CertificateModal
-//         isModalOpen={isModalOpen}
-//         handleCancel={() => setIsModalOpen(false)} // Close modal when cancelled
-//         providerData={selectedProvider} // Pass selected provider data
-//       />
-//     </ConfigProvider>
-//   );
-// }
-
-// export default CertificateList;
-
-// const columns = (handleEdit, handleBan) => [
-//   {
-//     title: "Coach Name",
-//     dataIndex: "coachName",
-//     key: "coachName",
-//     render: (text, record) => (
-//       <div className="flex items-center gap-2.5">
-//         <Avatar
-//           src={record.avatar}
-//           alt={text}
-//           shape="circle"
-//           size={40}
-//           className="border border-abbes"
-//         />
-//         <div className="flex flex-col">
-//           <span>{text}</span>
-//           <span>{record.email}</span>
-//         </div>
-//       </div>
-//     ),
-//   },
-//   {
-//     title: "Certificate Name",
-//     dataIndex: "certificateName",
-//     key: "certificateName",
-//   },
-//   {
-//     title: "Document",
-//     dataIndex: "document",
-//     key: "document",
-//     render: (_, record) => {
-//       return (
-//         <div className="flex items-center gap-1.5">
-//           <img src={pdf} width={40} height={40} />
-//           <div className="flex flex-col">
-//             <span>{record.document.fileName}</span>
-//             <span>{record.document.size}</span>
-//           </div>
-//         </div>
-//       );
-//     },
-//   },
-//   {
-//     title: "Submission Date",
-//     dataIndex: "submissionDate",
-//     key: "submissionDate",
-//   },
-
-//   {
-//     title: "Action",
-//     key: "action",
-//     render: (text, record) => (
-//       <div className="flex items-center gap-3">
-//         <Tooltip title="View">
-//           <FaRegEye
-//             size={25}
-//             className="hover:text-abbes cursor-pointer"
-//             onClick={() => handleEdit(record)} // Open modal on click
-//           />
-//         </Tooltip>
-//         <Tooltip title="Approve">
-//           <LuCheck
-//             size={25}
-//             className={`hover:text-green-500 cursor-pointer ${approve}`}
-//             onClick={() => {
-//               setApprove(true);
-//               setReject(false);
-//               message.success("Approved");
-//             }}
-//           />
-//         </Tooltip>
-//         <Tooltip title="Reject">
-//           <LuX
-//             size={25}
-//             className={`hover:text-red-500 cursor-pointer ${
-//               reject ? "text-red-500 scale-50" : null
-//             }`}
-//             onClick={() => {
-//               setReject(true);
-//               setApprove(false);
-//               message.success("Rejected");
-//             }}
-//           />
-//         </Tooltip>
-//       </div>
-//     ),
-//   },
-// ];
-
-// // Sample data
-// const data = [
-//   {
-//     key: 1,
-//     coachName: "John Doe",
-//     email: "johndoe@gmail.com",
-//     certificateName: "Fitness Coach",
-//     document: { fileName: "file.pdf", size: "2MB" },
-//     submissionDate: "12 Mar 2025",
-//     avatar: man,
-//     banned: false,
-//   },
-//   {
-//     key: 2,
-//     coachName: "Jane Smith",
-//     email: "janesmith@gmail.com",
-//     certificateName: "Football Coach",
-//     document: { fileName: "file.pdf", size: "2MB" },
-//     submissionDate: "12 May 2025",
-//     avatar: man,
-//     banned: false,
-//   },
-// ];
-
 import React, { useState } from "react";
 import {
   Table,
@@ -278,6 +15,7 @@ import man from "../../../assets/man.png";
 import pdf from "../../../assets/pdf.png";
 import GetPageName from "../../../components/common/GetPageName";
 import CertificateModal from "./CertificateModal.jsx"; // Import your modal
+import { CgEye, CgUndo } from "react-icons/cg";
 
 function CertificateList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -482,7 +220,7 @@ const columns = (handleEdit, handleApprove, handleReject, handleReset) => [
     render: (text, record) => (
       <div className="flex items-center gap-3">
         <Tooltip title="View">
-          <FaRegEye
+          <CgEye
             size={25}
             className="hover:text-abbes cursor-pointer"
             onClick={() => handleEdit(record)}
@@ -507,9 +245,11 @@ const columns = (handleEdit, handleApprove, handleReject, handleReset) => [
           />
         </Tooltip>
         <Tooltip title="Reset">
-          <Button size="small" onClick={() => handleReset(record.key)}>
-            Reset
-          </Button>
+          <CgUndo
+            size={28}
+            onClick={() => handleReset(record.key)}
+            className="hover:text-sky-600"
+          />
         </Tooltip>
       </div>
     ),

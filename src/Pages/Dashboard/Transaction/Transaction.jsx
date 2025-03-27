@@ -6,6 +6,7 @@ import { IoEye } from "react-icons/io5";
 import man from "../../../assets/man.png";
 import GetPageName from "../../../components/common/GetPageName";
 import dayjs from "dayjs";
+import { CgEye } from "react-icons/cg";
 // UserAvatar Component
 const UserAvatar = () => (
   <div className="flex gap-2 items-center">
@@ -155,7 +156,7 @@ function Transaction() {
       key: "action",
       render: (_, record) => (
         <div className="flex gap-4">
-          <IoEye
+          <CgEye
             style={{ fontSize: 24 }}
             className="text-black hover:text-abbes cursor-pointer"
           />
