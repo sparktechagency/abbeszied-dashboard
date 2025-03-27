@@ -87,6 +87,10 @@ p {
   background-color: #fd7d00 !important;
   color: #222222 !important;
 }
+.ant-menu-light.ant-menu-submenu-popup > .ant-menu > li {
+  display: flex;
+  align-items: center;
+}
 .ant-menu-item .ant-menu-item-active .ant-menu-item-selected {
   background-color: #fd7d00 !important;
   color: #ffffff !important;
@@ -96,14 +100,19 @@ p {
   color: #fd7d00 !important;
 }
 
-/* .ant-menu-submenu .ant-menu-submenu-inline .ant-menu-submenu-open {
-  background-color: #ffc301;
-} */
+.ant-menu-light.ant-menu-root.ant-menu-vertical > li {
+  display: flex;
+  align-items: center;
+}
 
-/* .ant-menu-item {
-  background-color: #ffffff !important;
-  color: #18a0fb !important;
-} */
+.ant-menu-light.ant-menu-root.ant-menu-vertical
+  > li
+  > .ant-menu-submenu-title
+  > svg {
+  width: 15px;
+  height: 15px;
+}
+
 .ant-menu-title-content:hover {
   color: white !important;
 }

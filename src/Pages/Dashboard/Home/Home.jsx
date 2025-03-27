@@ -43,7 +43,7 @@ const stats = [
 export const Card = ({ item }) => {
   return (
     <div
-      className={`flex w-full items-center justify-evenly h-24 rounded-xl bg-white gap-10 ${item.bg}`}
+      className={`flex w-full items-center justify-evenly h-32 rounded-xl bg-white gap-10 ${item.bg}`}
     >
       <div className="h-[80%] py-1.5 flex flex-col items-start justify-between">
         <p>{item.label}</p>

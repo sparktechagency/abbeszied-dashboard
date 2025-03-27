@@ -5,7 +5,7 @@ import {
   FaQuoteRight,
 } from "react-icons/fa6";
 import { CgTemplate } from "react-icons/cg";
-import { Menu } from "antd";
+import { Menu, Tooltip } from "antd";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LuClipboardList } from "react-icons/lu";
@@ -44,7 +44,12 @@ const Sidebar = ({ isCollapsed }) => {
     {
       key: "/",
       icon: <RxDashboard size={24} />,
-      label: <Link to="/">Overview</Link>,
+
+      label: isCollapsed ? (
+        <Link to="/ ">Overview</Link>
+      ) : (
+        <Link to="/">Overview</Link>
+      ),
     },
     {
       key: "/booking-list",
@@ -314,9 +319,9 @@ const Sidebar = ({ isCollapsed }) => {
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
-          style={{ background: "#ffffff" }}
           items={menuItems}
-          className="text-white mt-10 "
+          inlineCollapsed={isCollapsed}
+          className="text-white  bg-white my-auto "
         />
       </div>
     </div>
