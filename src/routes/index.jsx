@@ -32,7 +32,7 @@ import AboutUs from "../Pages/Dashboard/AboutUs/AboutUs.jsx";
 import Slider from "../Pages/Dashboard/Slider/Slider.jsx";
 import CoachSlider from "../Pages/Dashboard/CoachSlider/CoachSlider.jsx";
 import CorporateSlider from "../Pages/Dashboard/CorporateSlider/CorporateSlider.jsx";
-
+import ProtectedRoute from "./ProtectedRoute.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -41,113 +41,217 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Home />,
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
       },
 
       {
         path: "/coach-list",
-        element: <CoachList />,
+        element: (
+          <ProtectedRoute>
+            <CoachList />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/certificate-review",
-        element: <CertificateList />,
+        element: (
+          <ProtectedRoute>
+            <CertificateList />
+          </ProtectedRoute>
+        ),
       },
 
       {
         path: "/transaction",
-        element: <Transaction />,
+        element: (
+          <ProtectedRoute>
+            <Transaction />,
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/category",
-        element: <Category />,
+        element: (
+          <ProtectedRoute>
+            <Category />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/corporate-list",
-        element: <CorporateList />,
+        element: (
+          <ProtectedRoute>
+            <CorporateList />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/trainee-list",
-        element: <TraineeList />,
+        element: (
+          <ProtectedRoute>
+            <TraineeList />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/booking-list",
-        element: <BookingList />,
+        element: (
+          <ProtectedRoute>
+            <BookingList />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/pending-products",
-        element: <PendingProducts />,
+        element: (
+          <ProtectedRoute>
+            <PendingProducts />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/product-list",
-        element: <ProductList />,
+        element: (
+          <ProtectedRoute>
+            <ProductList />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/support-chat",
-        element: <SupportChat />,
+        element: (
+          <ProtectedRoute>
+            <SupportChat />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/chat/:chatRoomId",
-        element: <SupportChat />,
+        element: (
+          <ProtectedRoute>
+            <SupportChat />
+          </ProtectedRoute>
+        ),
         children: [
           {
             path: ":chatRoomId",
-            element: <ChatRoom />,
+            element: (
+              <ProtectedRoute>
+                <ChatRoom />
+              </ProtectedRoute>
+            ),
           },
         ],
       },
       {
         path: "/pushnotification",
-        element: <PushNotification />,
+        element: (
+          <ProtectedRoute>
+            <PushNotification />
+          </ProtectedRoute>
+        ),
       },
 
       {
         path: "/faq",
-        element: <FaqCollapse />,
+        element: (
+          <ProtectedRoute>
+            <FaqCollapse />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/contact",
-        element: <Contact />,
+        element: (
+          <ProtectedRoute>
+            <Contact />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/slider",
-        element: <Slider />,
+        element: (
+          <ProtectedRoute>
+            <Slider />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/coach-slider",
-        element: <CoachSlider />,
+        element: (
+          <ProtectedRoute>
+            <CoachSlider />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/corporate-slider",
-        element: <CorporateSlider />,
+        element: (
+          <ProtectedRoute>
+            <CorporateSlider />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/about-us",
-        element: <AboutUs />,
+        element: (
+          <ProtectedRoute>
+            <AboutUs />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/privacy-policy",
-        element: <PrivacyPolicy />,
+        element: (
+          <ProtectedRoute>
+            <PrivacyPolicy />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/terms-and-conditions",
-        element: <TermsAndCondition />,
+        element: (
+          <ProtectedRoute>
+            <TermsAndCondition />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/:serviceType-services", // Dynamic route for services
-        element: <SpecificService />, // Services component
+        element: (
+          <ProtectedRoute>
+            <SpecificService />
+          </ProtectedRoute>
+        ), // Services component
       },
       {
         path: "/profile",
-        element: <AdminProfile />,
+        element: (
+          <ProtectedRoute>
+            <AdminProfile />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/notification",
-        element: <Notifications />,
+        element: (
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        ),
       },
 
       {
         path: "/admin-list",
-        element: <Setting />,
+        element: (
+          <ProtectedRoute>
+            <Setting />
+          </ProtectedRoute>
+        ),
       },
     ],
   },
@@ -177,10 +281,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  {
-    path: "/user-profile",
-    element: <Users />,
-  },
+
   {
     path: "*",
     element: <NotFound />,

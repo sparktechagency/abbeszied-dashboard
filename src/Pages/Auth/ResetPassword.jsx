@@ -1,15 +1,34 @@
 import { Button, Form, Input, ConfigProvider } from "antd";
-import React from "react";
 import { MdLock } from "react-icons/md";
-
 import { useNavigate } from "react-router-dom";
+import { useResetPasswordMutation } from "../../redux/apiSlices/authSlice";
 
 const ResetPassword = () => {
-  const email = new URLSearchParams(location.search).get("email");
   const navigate = useNavigate();
 
+  const [resetPassword] = useResetPasswordMutation();
+
   const onFinish = async (values) => {
-    navigate(`/auth/login`);
+    const { newPassword, confirmPassword } = values;
+    const token = localStorage.getItem("resetToken");
+    console.log("resetToken", token);
+
+    try {
+      const res = await resetPassword({
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+
+      if (res.success) {
+        message.success("Password reset successful");
+        localStorage.removeItem("resetToken");
+        navigate(`/auth/login`);
+      } else {
+        message.error("Password reset failed");
+      }
+    } catch (err) {
+      message.error(err?.data?.message || "Something went wrong");
+    }
   };
 
   return (

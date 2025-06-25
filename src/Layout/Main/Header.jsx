@@ -20,6 +20,7 @@ const Header = ({ toggleSidebar }) => {
   };
 
   const userMenuItems = [
+    { label: <Link to="/profile">Profile</Link>, key: "profile" },
     { label: <Link to="/auth/login">Log Out</Link>, key: "logout" },
   ];
 

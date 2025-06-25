@@ -1,13 +1,48 @@
-import { Button, Form, Input, ConfigProvider } from "antd";
-import React from "react";
+import { Form, Input, ConfigProvider, message } from "antd";
 import { IoMail } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { useForgotPasswordMutation } from "../../redux/apiSlices/authSlice";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const onFinish = async (values) => {
-    navigate(`/auth/verify-otp?email=${values?.email}`);
+    const { email } = values;
+
+    try {
+      const res = await forgotPassword({ email: email.trim() }).unwrap();
+
+      if (res.success) {
+        message.success("OTP sent to your email");
+        navigate(`/auth/verify-otp?email=${email.trim()}`);
+        localStorage.setItem("forgetToken", res?.data?.forgetToken);
+      } else {
+        // Handle case where response is not successful
+        message.error(res?.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      console.error("ForgotPassword Error:", err);
+
+      // Handle different error response structures
+      let errorMessage = "Something went wrong";
+
+      if (err?.data?.message) {
+        // RTK Query error with data.message
+        errorMessage = err.data.message;
+      } else if (err?.message) {
+        // Direct error message
+        errorMessage = err.message;
+      } else if (err?.data?.errorSources?.length > 0) {
+        // Handle errorSources array
+        errorMessage = err.data.errorSources[0].message;
+      } else if (typeof err === "string") {
+        // String error
+        errorMessage = err;
+      }
+
+      message.error(errorMessage);
+    }
   };
 
   return (
@@ -42,6 +77,10 @@ const ForgotPassword = () => {
                 required: true,
                 message: "Please input your email!",
               },
+              {
+                type: "email",
+                message: "Please enter a valid email address",
+              },
             ]}
           >
             <Input
@@ -57,18 +96,18 @@ const ForgotPassword = () => {
             <button
               htmlType="submit"
               type="submit"
+              disabled={isLoading}
               style={{
                 width: "100%",
                 height: 45,
                 color: "white",
                 fontWeight: "400px",
                 fontSize: "18px",
-
                 marginTop: 20,
               }}
-              className="flex items-center justify-center bg-abbes rounded-lg"
+              className="flex items-center justify-center bg-abbes hover:bg-abbes/90 disabled:bg-abbes/50 disabled:cursor-not-allowed rounded-lg"
             >
-              Send OTP
+              {isLoading ? "Sending..." : "Send OTP"}
             </button>
           </Form.Item>
         </Form>

@@ -1,13 +1,34 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getBaseUrl } from "../../utils/baseUrl";
 
 export const api = createApi({
-    reducerPath: "api",
-    baseQuery: fetchBaseQuery({
-        baseUrl: "http://206.189.231.81:5000/api"
-        // baseUrl: "http://192.168.10.195:5000/api"
-    }),
-    endpoints: () => ({})
+  reducerPath: "api",
+  baseQuery: fetchBaseQuery({
+    baseUrl: getBaseUrl(),
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
+  endpoints: () => ({}),
+  tagTypes: [
+    "PRODUCTS",
+    "CATEGORY",
+    "VEHICLE",
+    "USER",
+    "PAYMENT",
+    "CONTACT",
+    "EXTRA",
+    "FAQ",
+    "FLEET",
+    "MANAGER",
+    "NOTIFICATION",
+    "TEAM",
+    "REVIEW",
+  ],
 });
 
-// export const imageUrl = "http://206.189.231.81:5000";
-export const imageUrl = "http://206.189.231.81:5000";
+export const imageUrl = getBaseUrl();

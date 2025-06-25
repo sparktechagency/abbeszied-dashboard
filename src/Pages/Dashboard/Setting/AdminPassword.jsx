@@ -1,10 +1,12 @@
-import React from "react";
 import { Form, Input, Card, Flex, ConfigProvider, message } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
-
+import { useChangePasswordMutation } from "../../../redux/apiSlices/authSlice";
+import { useNavigate } from "react-router-dom";
 function AdminPassword() {
-  const [form] = Form.useForm(); // Form instance
+  const navigation = useNavigate();
+  const [form] = Form.useForm();
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   // Handle cancel: Reset form fields
   const handleCancel = () => {
@@ -17,19 +19,35 @@ function AdminPassword() {
     try {
       const values = await form.validateFields();
       const trimmedValues = {
-        currentPassword: values.currentPassword.trim(),
+        oldPassword: values.currentPassword.trim(),
         newPassword: values.newPassword.trim(),
-        confirmPassword: values.confirmPassword.trim(),
       };
 
-      console.log("Password Updated:", trimmedValues);
+      console.log("Password Update Request:", trimmedValues);
 
-      // Replace this with an API call to update the password
-      message.success("Password updated successfully!");
+      // API call to update the password
+      const response = await changePassword(trimmedValues).unwrap();
 
-      form.resetFields(); // Clear form after successful update
+      console.log("Password update response:", response);
+      if (response.success) {
+        message.success("Password updated successfully!");
+        form.resetFields();
+        navigation("/auth/longin");
+      }
     } catch (error) {
-      console.error("Validation failed:", error);
+      console.error("Password update failed:", error);
+
+      // Handle different types of errors
+      if (error?.data?.message) {
+        // Server returned an error message
+        message.error(error.data.message);
+      } else if (error?.message) {
+        // Network or other error
+        message.error(error.message);
+      } else {
+        // Generic error fallback
+        message.error("Failed to update password. Please try again.");
+      }
     }
   };
 
@@ -52,7 +70,6 @@ function AdminPassword() {
       <Card
         title="Change Password"
         bordered={false}
-        // style={{ width: 850, height: 500 }}
         className="w-2/5 h-full flex flex-col text-white shadow-[0px_10px_100px_3px_rgba(0,_0,_0,_0.1)]"
       >
         <ConfigProvider
@@ -89,7 +106,6 @@ function AdminPassword() {
                 }
               />
             </Form.Item>
-
             {/* New Password */}
             <Form.Item
               label="New Password"
@@ -111,8 +127,7 @@ function AdminPassword() {
                 }
               />
             </Form.Item>
-
-            {/* Confirm New Password */}
+            {/* Confirm New Password
             <Form.Item
               label="Confirm New Password"
               name="confirmPassword"
@@ -140,14 +155,17 @@ function AdminPassword() {
                   visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
                 }
               />
-            </Form.Item>
-
+            </Form.Item> */}
             {/* Buttons: Cancel & Save */}
             <Flex justify="flex-end" className="w-[80%] gap-4">
               <ButtonEDU actionType="cancel" onClick={handleCancel}>
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="save" onClick={handleSave}>
+              <ButtonEDU
+                actionType="save"
+                onClick={handleSave}
+                loading={isLoading}
+              >
                 Save
               </ButtonEDU>
             </Flex>

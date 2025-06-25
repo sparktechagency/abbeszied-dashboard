@@ -1,17 +1,53 @@
-import { Button, Checkbox, Form, Input, ConfigProvider } from "antd";
-import React from "react";
+import { Checkbox, Form, Input, ConfigProvider, message } from "antd";
 import { useNavigate } from "react-router-dom";
-import FormItem from "../../components/common/FormItem";
 import { RiUser2Fill } from "react-icons/ri";
 import { MdLock } from "react-icons/md";
-// import Cookies from "js-cookie";
+import { useLoginMutation } from "../../redux/apiSlices/authSlice";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [logIn, { isLoading }] = useLoginMutation();
 
   const onFinish = async (values) => {
-    navigate("/");
-    // Cookies.set('token', token, { expires: 7 })
+    const { email, password } = values;
+
+    try {
+      const res = await logIn({
+        email: email.trim(),
+        password: password.trim(),
+      }).unwrap();
+
+      if (res.success) {
+        console.log("res", res);
+        localStorage.setItem("accessToken", res?.data?.accessToken);
+        message.success("Login successful!");
+        navigate("/");
+      } else {
+        // Handle case where response is not successful
+        message.error(res?.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+
+      // Handle different error response structures
+      let errorMessage = "Login failed";
+
+      if (err?.data?.message) {
+        // RTK Query error with data.message
+        errorMessage = err.data.message;
+      } else if (err?.message) {
+        // Direct error message
+        errorMessage = err.message;
+      } else if (err?.data?.errorSources?.length > 0) {
+        // Handle errorSources array
+        errorMessage = err.data.errorSources[0].message;
+      } else if (typeof err === "string") {
+        // String error
+        errorMessage = err;
+      }
+
+      message.error(errorMessage);
+    }
   };
 
   return (
@@ -42,6 +78,10 @@ const Login = () => {
               {
                 required: true,
                 message: `Please Enter your email`,
+              },
+              {
+                type: "email",
+                message: "Please enter a valid email address",
               },
             ]}
           >
@@ -95,18 +135,18 @@ const Login = () => {
             <button
               htmlType="submit"
               type="submit"
+              disabled={isLoading}
               style={{
                 width: "100%",
                 height: 47,
                 color: "white",
                 fontWeight: "400px",
                 fontSize: "18px",
-
                 marginTop: 20,
               }}
-              className="flex items-center justify-center bg-abbes hover:bg-abbes/90 rounded-lg text-base"
+              className="flex items-center justify-center bg-abbes hover:bg-abbes/90 disabled:bg-abbes/50 disabled:cursor-not-allowed rounded-lg text-base"
             >
-              {/* {isLoading? < Spinner/> : "Sign in"} */} Sign in
+              {isLoading ? "Signing in..." : "Sign in"}
             </button>
           </Form.Item>
         </Form>
