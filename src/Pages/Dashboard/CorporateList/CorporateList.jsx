@@ -1,85 +1,122 @@
 import React, { useState, useEffect } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button } from "antd";
+import {
+  Table,
+  Avatar,
+  ConfigProvider,
+  Input,
+  Button,
+  Pagination,
+  message,
+} from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
+
+import man from "../../../assets/man.png";
+
+import { HiBan } from "react-icons/hi";
+import { GrStatusGood } from "react-icons/gr";
+import { getImageUrl } from "../../../utils/baseUrl";
 import CorporateEditModal from "./CorporateEditModal";
-import corporateLogo from "../../../assets/corporateLogo.png";
+import {
+  useGetUserByRoleQuery,
+  useUpdateUserMutation,
+} from "../../../redux/apiSlices/userManagement";
 
 function CorporateList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [userData, setUserData] = useState(data);
+  const [userData, setUserData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
-  const [filteredData, setFilteredData] = useState(data);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
-  // Improved search function with explicit debug logging
+  const {
+    data: coachData,
+    isLoading,
+    error,
+    refetch,
+  } = useGetUserByRoleQuery({
+    role: "corporate",
+    page,
+    limit,
+    searchTerm: searchQuery,
+  });
+
+  const [banUser, { isLoading: isBanLoading }] = useUpdateUserMutation();
+
+  // Transform API data to match table structure
   useEffect(() => {
-    const filterData = () => {
-      if (!searchQuery.trim()) {
-        setFilteredData(userData);
-        return;
-      }
-
-      const query = searchQuery.trim();
-
-      const filtered = userData.filter((user) => {
-        // Create an array of all searchable values
-        const searchableValues = [
-          user.corporateName,
-          user.phoneNumber,
-          user.address,
-          user.jobPost.toString(), // Explicitly convert jobPost to string
-        ];
-
-        // Check if any value includes the search query (case insensitive)
-        return searchableValues.some((value) =>
-          value.toString().toLowerCase().includes(query.toLowerCase())
-        );
-      });
-
-      // Debug logs (can be removed in production)
-      console.log("Search Query:", query);
-      console.log("Filtered Data:", filtered);
-      console.log(
-        "JobPost values:",
-        userData.map((u) => u.jobPost)
-      );
-
-      setFilteredData(filtered);
-    };
-
-    filterData();
-  }, [searchQuery, userData]);
+    if (coachData?.data) {
+      const transformedData = coachData.data.map((client, index) => ({
+        key: client._id || index,
+        corporateName: client.fullName || "N/A",
+        email: client.email || "N/A",
+        phoneNumber: client.phone || "N/A",
+        address: client.address || "N/A",
+        spent: "0",
+        avatar: client.image || man,
+        banned: !client.isActive,
+        createdAt: client.createdAt,
+      }));
+      setUserData(transformedData);
+    }
+  }, [coachData]);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
+    setPage(1);
   };
+
+  const displayData = userData;
 
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
 
+  // Handle edit button click
   const handleEdit = (record) => {
     setSelectedProvider(record);
     setIsModalOpen(true);
   };
 
-  const handleBan = (provider) => {
-    setUserData((prevData) =>
-      prevData.map((user) =>
-        user.key === provider.key ? { ...user, banned: !user.banned } : user
-      )
-    );
-    alert(
-      `${provider.corporateName} has been ${
-        provider.banned ? "unbanned" : "banned"
-      }`
-    );
+  // Handle ban functionality
+  const handleBan = async (record) => {
+    try {
+      console.log("Record data:", record); // Debug log to see what's being passed
+
+      // Determine new status based on current banned state
+      const newStatus = record?.banned ? "active" : "blocked";
+
+      // Prepare the payload - ensure the ID field matches what your API expects
+      const payload = {
+        id: record?.key, // or record?._id if that's what your API expects
+        status: newStatus,
+      };
+
+      console.log("Payload being sent:", payload); // Debug log for payload
+
+      const res = await banUser(payload).unwrap();
+
+      if (res.success) {
+        message.success(
+          `Corporate has been ${
+            newStatus === "blocked" ? "blocked" : "activated"
+          } successfully`
+        );
+      }
+
+      // Refetch data to get updated state from server
+      refetch();
+    } catch (err) {
+      console.error("Ban/Unban error:", err);
+      message.error(err?.data?.message || "Failed to update user status");
+    }
   };
 
+  // Handle saving edited provider
   const handleSave = (updatedProvider) => {
     setUserData((prevData) =>
       prevData.map((user) =>
@@ -93,6 +130,16 @@ function CorporateList() {
     setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
     setSelectedRowKeys([]);
   };
+
+  // Show loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Show error state
+  if (error) {
+    return <div>Error loading data: {error.message}</div>;
+  }
 
   return (
     <ConfigProvider
@@ -125,11 +172,12 @@ function CorporateList() {
         <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
         <div className="flex gap-3">
           <Input
-            placeholder="Search in all fields"
+            placeholder="Search by Name, Email or Phone"
             onChange={(e) => handleSearch(e.target.value)}
             prefix={<SearchOutlined />}
             className="h-9 gap-2"
             allowClear
+            value={searchQuery}
           />
           {selectedRowKeys.length > 0 && (
             <Button
@@ -143,19 +191,42 @@ function CorporateList() {
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
-        columns={columns(handleEdit, handleBan)}
-        dataSource={filteredData}
-        pagination={{
-          defaultPageSize: 5,
-          position: ["bottomRight"],
-          size: "default",
-          showSizeChanger: true,
-          showQuickJumper: true,
+      <div className="max-h-[75vh] overflow-auto border rounded-md">
+        <Table
+          rowSelection={rowSelection}
+          columns={columns(handleEdit, handleBan, isBanLoading)}
+          dataSource={displayData}
+          pagination={false}
+          loading={isLoading}
+        />
+      </div>
+
+      <Pagination
+        current={page}
+        pageSize={limit}
+        total={coachData?.meta?.total || 0}
+        showTotal={(total, range) =>
+          `${range[0]}-${range[1]} of ${total} items`
+        }
+        size="small"
+        align="end"
+        showSizeChanger={true}
+        showQuickJumper={true}
+        pageSizeOptions={["10", "20", "50"]}
+        onChange={(newPage, newPageSize) => {
+          setPage(newPage);
+          if (newPageSize !== limit) {
+            setLimit(newPageSize);
+          }
         }}
+        onShowSizeChange={(current, size) => {
+          setPage(1);
+          setLimit(size);
+        }}
+        className="mt-2 text-right"
       />
 
+      {/* Edit Modal */}
       <CorporateEditModal
         isModalOpen={isModalOpen}
         handleCancel={() => setIsModalOpen(false)}
@@ -166,8 +237,10 @@ function CorporateList() {
   );
 }
 
-// Columns definition remains the same
-const columns = (handleEdit, handleBan) => [
+export default CorporateList;
+
+// Updated columns definition with additional information
+const columns = (handleEdit, handleBan, isBanLoading) => [
   {
     title: "Name",
     dataIndex: "corporateName",
@@ -175,14 +248,15 @@ const columns = (handleEdit, handleBan) => [
     render: (text, record) => (
       <div className="flex items-center gap-2.5">
         <Avatar
-          src={record.avatar}
+          src={`${getImageUrl}${record.avatar}`}
           alt={text}
           shape="circle"
           size={40}
           className="border border-abbes"
         />
         <div className="flex flex-col">
-          <span>{text}</span>
+          <span className="font-medium">{text}</span>
+          <span className="text-gray-500 text-sm">{record.email}</span>
         </div>
       </div>
     ),
@@ -191,57 +265,48 @@ const columns = (handleEdit, handleBan) => [
     title: "Phone Number",
     dataIndex: "phoneNumber",
     key: "phoneNumber",
-    render: (_, record) => <span>+{record.phoneNumber}</span>,
+    render: (phone) => <span>{phone !== "N/A" ? `+${phone}` : "N/A"}</span>,
   },
   {
     title: "Address",
     dataIndex: "address",
     key: "address",
+    render: (address) => <span className="text-sm">{address || "N/A"}</span>,
   },
   {
     title: "Job Post",
-    dataIndex: "jobPost",
-    key: "jobPost",
+    dataIndex: "spent",
+    key: "spent",
+    render: (spent) => <span>${spent}</span>,
+  },
+  {
+    title: "Status",
+    dataIndex: "banned",
+    key: "banned",
+    render: (banned, record) => (
+      <div className="flex flex-col">
+        {banned ? (
+          <div className="flex items-center gap-2">
+            <HiBan size={20} className="text-red-600" />
+            <span className="text-red-600 text-sm">Blocked</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <GrStatusGood size={20} className="text-green-600" />
+            <span className="text-green-600 text-sm">Active</span>
+          </div>
+        )}
+      </div>
+    ),
   },
   {
     key: "action",
-    render: (_, record) => (
+    render: (text, record) => (
       <PopOver
         onEdit={() => handleEdit(record)}
         onBan={() => handleBan(record)}
+        loading={isBanLoading}
       />
     ),
-  },
-];
-
-export default CorporateList;
-// Sample Data with the exact structure you provided
-const data = [
-  {
-    key: 1,
-    corporateName: "Aspire Sports Academy",
-    phoneNumber: "1234567890",
-    address: "10 Warehouse Road, Apapa, Lagos",
-    jobPost: 180,
-    avatar: corporateLogo,
-    banned: false,
-  },
-  {
-    key: 2,
-    corporateName: "Aspire Sports Academy",
-    phoneNumber: "1234567891",
-    address: "15 Broad Street, Lagos",
-    jobPost: 155,
-    avatar: corporateLogo,
-    banned: false,
-  },
-  {
-    key: 3,
-    corporateName: "Aspire Sports Academy",
-    phoneNumber: "1234567891",
-    address: "15 Broad Street, Lagos",
-    jobPost: 50,
-    avatar: corporateLogo,
-    banned: false,
   },
 ];

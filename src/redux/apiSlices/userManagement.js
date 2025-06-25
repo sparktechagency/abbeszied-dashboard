@@ -3,14 +3,14 @@ import { api } from "../api/baseApi";
 const userManagementSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     updateUser: builder.mutation({
-      query: ({ id, updatedData }) => {
+      query: ({ id, status }) => {
         return {
-          url: `/category/${id}`,
+          url: `/user-managments/status/${id}`,
           method: "PATCH",
-          body: updatedData,
+          body: { status },
         };
       },
-      invalidatesTags: ["CATEGORY"],
+      invalidatesTags: ["USER"],
     }),
     deleteUser: builder.mutation({
       query: (id) => {
@@ -19,7 +19,7 @@ const userManagementSlice = api.injectEndpoints({
           method: "DELETE",
         };
       },
-      invalidatesTags: ["CATEGORY"],
+      invalidatesTags: ["USER"],
     }),
     getUserByRole: builder.query({
       query: ({ role, page, limit, searchTerm }) => {
@@ -39,7 +39,7 @@ const userManagementSlice = api.injectEndpoints({
           method: "GET",
         };
       },
-      providesTags: ["CATEGORY"],
+      providesTags: ["USER"],
     }),
   }),
 });
