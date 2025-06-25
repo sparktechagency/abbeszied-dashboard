@@ -57,7 +57,7 @@ function CorporateList() {
         address: client.address || "N/A",
         spent: "0",
         avatar: client.image || man,
-        banned: !client.isActive,
+        banned: client.status,
         createdAt: client.createdAt,
       }));
       setUserData(transformedData);
@@ -85,31 +85,31 @@ function CorporateList() {
   // Handle ban functionality
   const handleBan = async (record) => {
     try {
-      console.log("Record data:", record); // Debug log to see what's being passed
+      console.log("Record data:", record);
 
-      // Determine new status based on current banned state
-      const newStatus = record?.banned ? "active" : "blocked";
+      // Proper toggle logic: if current status is 'blocked', change to 'active', and vice versa
+      const newStatus = record?.banned === "blocked" ? "active" : "blocked";
 
-      // Prepare the payload - ensure the ID field matches what your API expects
+      // Use the original _id for API calls
       const payload = {
-        id: record?.key, // or record?._id if that's what your API expects
+        id: record?._id || record?.key,
         status: newStatus,
       };
 
-      console.log("Payload being sent:", payload); // Debug log for payload
+      console.log("Payload being sent:", payload);
 
       const res = await banUser(payload).unwrap();
 
       if (res.success) {
         message.success(
-          `Corporate has been ${
+          `Coach has been ${
             newStatus === "blocked" ? "blocked" : "activated"
           } successfully`
         );
-      }
 
-      // Refetch data to get updated state from server
-      refetch();
+        // Refetch data to get updated state from server
+        refetch();
+      }
     } catch (err) {
       console.error("Ban/Unban error:", err);
       message.error(err?.data?.message || "Failed to update user status");
@@ -285,15 +285,15 @@ const columns = (handleEdit, handleBan, isBanLoading) => [
     key: "banned",
     render: (banned, record) => (
       <div className="flex flex-col">
-        {banned ? (
+        {banned === "blocked" ? (
           <div className="flex items-center gap-2">
             <HiBan size={20} className="text-red-600" />
-            <span className="text-red-600 text-sm">Blocked</span>
+            <span className="text-red-600 text-sm font-medium">Blocked</span>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <GrStatusGood size={20} className="text-green-600" />
-            <span className="text-green-600 text-sm">Active</span>
+            <span className="text-green-600 text-sm font-medium">Active</span>
           </div>
         )}
       </div>
@@ -306,6 +306,7 @@ const columns = (handleEdit, handleBan, isBanLoading) => [
         onEdit={() => handleEdit(record)}
         onBan={() => handleBan(record)}
         loading={isBanLoading}
+        banText={record.banned === "blocked" ? "Activate" : "Block"} // Dynamic text for better UX
       />
     ),
   },

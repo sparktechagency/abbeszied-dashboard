@@ -5,7 +5,10 @@ import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
 import TraineeEditModal from "./TraineeEditModal";
 import man from "../../../assets/man.png";
-import { useGetUserByRoleQuery } from "../../../redux/apiSlices/userManagement";
+import {
+  useGetUserByRoleQuery,
+  useUpdateUserMutation,
+} from "../../../redux/apiSlices/userManagement";
 import { HiBan } from "react-icons/hi";
 import { GrStatusGood } from "react-icons/gr";
 import { getImageUrl } from "../../../utils/baseUrl";
@@ -30,6 +33,8 @@ function TraineeList() {
     searchTerm: searchQuery, // Fixed typo: was "searTerm"
   });
 
+  const [banUser, { isLoading: isBanLoading }] = useUpdateUserMutation();
+
   // Transform API data to match table structure
   useEffect(() => {
     if (clientData?.data) {
@@ -41,7 +46,7 @@ function TraineeList() {
         address: client.address || "N/A",
         spent: "0", // You might need to calculate this from another API
         avatar: client.image || man,
-        banned: !client.isActive,
+        banned: client.status,
         createdAt: client.createdAt,
       }));
       setUserData(transformedData);
@@ -68,17 +73,37 @@ function TraineeList() {
   };
 
   // Handle ban functionality
-  const handleBan = (provider) => {
-    setUserData((prevData) =>
-      prevData.map((user) =>
-        user.key === provider.key ? { ...user, banned: !user.banned } : user
-      )
-    );
-    alert(
-      `${provider.traineeName} has been ${
-        provider.banned ? "unbanned" : "banned"
-      }`
-    );
+  const handleBan = async (record) => {
+    try {
+      console.log("Record data:", record);
+
+      // Proper toggle logic: if current status is 'blocked', change to 'active', and vice versa
+      const newStatus = record?.banned === "blocked" ? "active" : "blocked";
+
+      // Use the original _id for API calls
+      const payload = {
+        id: record?._id || record?.key,
+        status: newStatus,
+      };
+
+      console.log("Payload being sent:", payload);
+
+      const res = await banUser(payload).unwrap();
+
+      if (res.success) {
+        message.success(
+          `Coach has been ${
+            newStatus === "blocked" ? "blocked" : "activated"
+          } successfully`
+        );
+
+        // Refetch data to get updated state from server
+        refetch();
+      }
+    } catch (err) {
+      console.error("Ban/Unban error:", err);
+      message.error(err?.data?.message || "Failed to update user status");
+    }
   };
 
   // Handle saving edited provider
@@ -246,18 +271,20 @@ const columns = (handleEdit, handleBan) => [
   },
   {
     title: "Status",
-    dataIndex: "banned", // Fixed: should use 'banned' field
+    dataIndex: "banned",
     key: "banned",
     render: (banned, record) => (
       <div className="flex flex-col">
-        {banned ? (
-          <p className="flex items-center gap-4 text-red-600">
-            <HiBan size={25} />
-          </p>
+        {banned === "blocked" ? (
+          <div className="flex items-center gap-2">
+            <HiBan size={20} className="text-red-600" />
+            <span className="text-red-600 text-sm font-medium">Blocked</span>
+          </div>
         ) : (
-          <p className="flex items-center gap-4 text-green-600">
-            <GrStatusGood size={25} />
-          </p>
+          <div className="flex items-center gap-2">
+            <GrStatusGood size={20} className="text-green-600" />
+            <span className="text-green-600 text-sm font-medium">Active</span>
+          </div>
         )}
       </div>
     ),
@@ -268,6 +295,8 @@ const columns = (handleEdit, handleBan) => [
       <PopOver
         onEdit={() => handleEdit(record)}
         onBan={() => handleBan(record)}
+        loading={isBanLoading}
+        banText={record.banned === "blocked" ? "Activate" : "Block"} // Dynamic text for better UX
       />
     ),
   },
