@@ -1,143 +1,147 @@
-import React, { useState } from "react";
-import {
-  Table,
-  ConfigProvider,
-  Modal,
-  Form,
-  Input,
-  Upload,
-  message,
-  Button,
-} from "antd";
-import {
-  PlusOutlined,
-  CloudUploadOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
+import React, { useState, useEffect } from "react";
+import { Table, ConfigProvider, Modal, message, Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import CategoryModal from "./CategoryModal";
 import { FiEdit2 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import minilogo from "../../../assets/minilogo.png";
+import {
+  useCategoryQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+} from "../../../redux/apiSlices/categorySlice";
+import { getImageUrl } from "../../../utils/baseUrl";
 
 function Category() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [form] = Form.useForm();
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [editingKey, setEditingKey] = useState(null);
-  const [tableData, setTableData] = useState([
-    { key: "1", name: "John Brown", serial: 1, icon: minilogo },
-    { key: "2", name: "Jim Green", serial: 2, icon: minilogo },
-    { key: "3", name: "Joe Black", serial: 3, icon: minilogo },
-    {
-      key: "4",
-      serial: 4,
-      icon: minilogo,
-      name: "Mountain Escape",
-    },
-    {
-      key: "5",
-      serial: 5,
-      icon: minilogo,
-      name: "Sunset Glow",
-    },
-    {
-      key: "6",
-      serial: 6,
-      icon: minilogo,
-      name: "City Lights",
-    },
-  ]);
+  const [editingData, setEditingData] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(null);
 
+  // API hooks
+  const {
+    data: categoryData,
+    isLoading,
+    isError,
+    refetch,
+  } = useCategoryQuery();
+  const [createCategory, { isLoading: isCreating }] =
+    useCreateCategoryMutation();
+  const [updateCategory, { isLoading: isUpdating }] =
+    useUpdateCategoryMutation();
+  const [deleteCategory, { isLoading: isDeleting }] =
+    useDeleteCategoryMutation();
+
+  // Transform API data for table
+  const tableData =
+    categoryData?.data?.map((item, index) => ({
+      key: item._id,
+      id: item._id,
+      name: item.name,
+      serial: index + 1,
+      icon: item.image
+        ? `${getImageUrl}${
+            item.image
+          }`
+        : null,
+      type: item.type,
+      count: item.count,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    })) || [];
+
   const showModal = () => {
     setIsEditing(false);
+    setEditingData(null);
     setIsModalOpen(true);
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    form.resetFields();
-    setUploadedImage(null);
-    setEditingKey(null);
+    setEditingData(null);
   };
 
-  const handleFormSubmit = (values) => {
-    if (!uploadedImage && !isEditing) {
-      message.error("Please upload an image!");
-      return;
-    }
+  const handleFormSubmit = async (formData) => {
+    try {
+      // Create FormData for file upload
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("type", formData.type || "client"); // Default type
 
-    if (isEditing) {
-      // Update existing row
-      const updatedData = tableData.map((item) =>
-        item.key === editingKey
-          ? {
-              ...item,
-              name: values.name,
-              icon: uploadedImage || item.icon,
-            }
-          : item
+      // Handle image upload
+      if (formData.icon) {
+        if (
+          typeof formData.icon === "string" &&
+          formData.icon.startsWith("data:")
+        ) {
+          // Convert base64 to file for new uploads
+          const response = await fetch(formData.icon);
+          const blob = await response.blob();
+          const file = new File([blob], "category-image.png", {
+            type: blob.type,
+          });
+          data.append("image", file);
+        } else if (formData.icon instanceof File) {
+          data.append("image", formData.icon);
+        }
+      }
+
+      if (isEditing && editingData) {
+        // Update existing category
+        await updateCategory({
+          id: editingData.id,
+          updatedData: data,
+        }).unwrap();
+        message.success("Category updated successfully!");
+      } else {
+        // Create new category
+        await createCategory(data).unwrap();
+        message.success("Category added successfully!");
+      }
+
+      setIsModalOpen(false);
+      setEditingData(null);
+      refetch(); // Refresh data
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      message.error(
+        error?.data?.message || "An error occurred while saving the category"
       );
-      setTableData(updatedData);
-      message.success("Category updated successfully!");
-    } else {
-      // Add new row
-      setTableData([
-        ...tableData,
-        {
-          key: (tableData.length + 1).toString(),
-          name: values.name,
-          serial: tableData.length + 1,
-          icon: uploadedImage,
-        },
-      ]);
-      message.success("Category added successfully!");
     }
-
-    handleCancel();
-  };
-
-  const handleImageUpload = (info) => {
-    const file = info.file.originFileObj;
-    if (!file) return;
-
-    const isImage = file.type.startsWith("image/");
-    if (!isImage) {
-      message.error("You can only upload image files!");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setUploadedImage(reader.result);
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleEdit = (record) => {
     setIsEditing(true);
-    setEditingKey(record.key);
-    setUploadedImage(record.icon);
-    form.setFieldsValue({ name: record.name });
+    setEditingData(record);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (key, name) => {
-    setDeletingRecord({ key, name });
+  const handleDelete = (record) => {
+    setDeletingRecord(record);
     setIsDeleteModalOpen(true);
   };
 
-  const onConfirmDelete = () => {
-    setTableData(tableData.filter((item) => item.key !== deletingRecord.key));
-    message.success("Icon deleted successfully!");
-    setIsDeleteModalOpen(false);
+  const onConfirmDelete = async () => {
+    try {
+      await deleteCategory(deletingRecord.id).unwrap();
+      message.success("Category deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setDeletingRecord(null);
+      refetch(); // Refresh data
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      message.error(
+        error?.data?.message || "An error occurred while deleting the category"
+      );
+    }
   };
 
   const onCancelDelete = () => {
     message.info("Delete action canceled.");
     setIsDeleteModalOpen(false);
+    setDeletingRecord(null);
   };
 
   const columns = [
@@ -155,12 +159,50 @@ function Category() {
       title: "Icon",
       dataIndex: "icon",
       key: "icon",
-      render: (icon) => <img width={60} src={icon} alt="Icon" />,
+      render: (icon) => (
+        <div className="w-[60px] h-[60px] flex items-center justify-center">
+          {icon ? (
+            <img
+              width={60}
+              height={60}
+              src={icon}
+              alt="Category Icon"
+              className="object-cover rounded"
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="w-[60px] h-[60px] bg-gray-200 rounded flex items-center justify-center">
+              <span className="text-gray-400 text-xs">No Image</span>
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
+      render: (name) => (
+        <span className="font-medium text-gray-800">{name}</span>
+      ),
+    },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (type) => (
+        <span className="capitalize px-2 py-1 bg-gray-100 rounded text-sm">
+          {type}
+        </span>
+      ),
+    },
+    {
+      title: "Count",
+      dataIndex: "count",
+      key: "count",
+      render: (count) => <span className="text-gray-600">{count || 0}</span>,
     },
     {
       title: "Actions",
@@ -169,18 +211,36 @@ function Category() {
         <div className="flex gap-4">
           <FiEdit2
             style={{ fontSize: 24 }}
-            className="text-black hover:text-blue-500 cursor-pointer"
+            className="text-black hover:text-blue-500 cursor-pointer transition-colors"
             onClick={() => handleEdit(record)}
           />
           <RiDeleteBin6Line
             style={{ fontSize: 24 }}
-            className="text-black hover:text-red-500 cursor-pointer"
-            onClick={() => handleDelete(record.key, record.name)}
+            className="text-black hover:text-red-500 cursor-pointer transition-colors"
+            onClick={() => handleDelete(record)}
           />
         </div>
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg">Loading categories...</div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg text-red-500">
+          Error loading categories. Please try again.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ConfigProvider
@@ -198,10 +258,10 @@ function Category() {
             itemActiveBg: "#18a0fb",
           },
           Button: {
-            defaultHoverBg: "fd7d00 ",
+            defaultHoverBg: "fd7d00",
             defaultHoverColor: "white",
-            defaultHoverBorderColor: "fd7d00 ",
-            defaultActiveBg: "fd7d00 ",
+            defaultHoverBorderColor: "fd7d00",
+            defaultActiveBg: "fd7d00",
             defaultActiveColor: "white",
             defaultActiveBorderColor: "fd7d00",
           },
@@ -214,6 +274,7 @@ function Category() {
           <Button
             className="bg-abbes/90 text-white px-4 py-2.5 h-9 rounded-md flex items-center"
             onClick={showModal}
+            loading={isCreating}
           >
             <PlusOutlined className="mr-2" />
             Add New
@@ -223,110 +284,59 @@ function Category() {
         <Table
           columns={columns}
           dataSource={tableData}
+          loading={isLoading}
           pagination={{
             defaultPageSize: 5,
             position: ["bottomRight"],
             size: "default",
             showSizeChanger: true,
             showQuickJumper: true,
+            total: tableData.length,
           }}
+          scroll={{ x: 800 }}
         />
 
         {/* Delete Confirmation Modal */}
         <Modal
           title="Delete Confirmation"
-          visible={isDeleteModalOpen}
+          open={isDeleteModalOpen}
           onCancel={onCancelDelete}
           footer={null}
           centered
         >
           <div className="flex flex-col justify-between gap-5">
-            <div className="flex justify-center">
+            <div className="flex justify-center text-center">
               Are you sure you want to delete{" "}
-              <span className="font-bold ml-1">{deletingRecord?.name}</span>?
+              <span className="font-bold ml-1">"{deletingRecord?.name}"</span>?
             </div>
             <div className="flex justify-center gap-4">
-              <ButtonEDU actionType="cancel" onClick={onCancelDelete}>
+              <ButtonEDU
+                actionType="cancel"
+                onClick={onCancelDelete}
+                disabled={isDeleting}
+              >
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="delete" onClick={onConfirmDelete}>
+              <ButtonEDU
+                actionType="delete"
+                onClick={onConfirmDelete}
+                loading={isDeleting}
+              >
                 Delete
               </ButtonEDU>
             </div>
           </div>
         </Modal>
 
-        {/* Modal Form */}
-        <Modal
-          title={isEditing ? "Edit Category" : "Add Category"}
-          open={isModalOpen}
-          onCancel={handleCancel}
-          centered
-          footer={null}
-        >
-          <ConfigProvider
-            theme={{
-              components: {
-                Form: {
-                  labelFontSize: 16,
-                },
-                Input: {
-                  hoverBorderColor: "#fd7d00",
-                  activeBorderColor: "#fd7d00",
-                },
-                token: {
-                  colorPrimaryHover: "#fd7d00",
-                },
-              },
-            }}
-          >
-            <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-              <Form.Item
-                label="Name"
-                name="name"
-                rules={[{ required: true, message: "Please enter the name!" }]}
-              >
-                <Input placeholder="Enter slider name" className="h-10" />
-              </Form.Item>
-
-              <Form.Item label="Upload Image">
-                {uploadedImage ? (
-                  <div className="relative">
-                    <img src={uploadedImage} alt="Uploaded" width={100} />
-                    <CloseCircleOutlined
-                      className="absolute top-0 right-0 text-red-500 cursor-pointer"
-                      onClick={() => setUploadedImage(null)}
-                    />
-                  </div>
-                ) : (
-                  <Upload
-                    name="image"
-                    listType="picture-card"
-                    showUploadList={false}
-                    onChange={handleImageUpload}
-                  >
-                    <button style={{ border: 0, background: "none" }}>
-                      <CloudUploadOutlined
-                        style={{ fontSize: 24 }}
-                        className="border rounded-full p-2.5"
-                      />
-                      <div className="flex flex-col text-[14px]">
-                        <sapn>Drop your Icon here or </sapn>
-                        <span className="text-abbes"> Click to upload</span>
-                      </div>
-                    </button>
-                  </Upload>
-                )}
-              </Form.Item>
-
-              <div className="flex justify-end w-full">
-                <ButtonEDU actionType="save" className="w-full">
-                  Save
-                </ButtonEDU>
-              </div>
-            </Form>
-          </ConfigProvider>
-        </Modal>
+        {/* Add/Edit Category Modal */}
+        <CategoryModal
+          isModalOpen={isModalOpen}
+          handleCancel={handleCancel}
+          onSubmit={handleFormSubmit}
+          isEditing={isEditing}
+          editingData={editingData}
+          isLoading={isCreating || isUpdating}
+        />
       </div>
     </ConfigProvider>
   );
