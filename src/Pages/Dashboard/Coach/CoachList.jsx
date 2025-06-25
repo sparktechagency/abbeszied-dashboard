@@ -1,30 +1,61 @@
-import React, { useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button } from "antd";
+import React, { useState, useEffect } from "react";
+import { Table, Avatar, ConfigProvider, Input, Button, Pagination } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
-import ServiceEditModal from "./ServiceEditModal"; // Import modal
+
 import man from "../../../assets/man.png";
+import { useGetUserByRoleQuery } from "../../../redux/apiSlices/userManagement";
+import { HiBan } from "react-icons/hi";
+import { GrStatusGood } from "react-icons/gr";
+import { getImageUrl } from "../../../utils/baseUrl";
+import ServiceEditModal from "./ServiceEditModal";
+
 function CoachList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [userData, setUserData] = useState(data);
+  const [userData, setUserData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+
+  const {
+    data: coachData,
+    isLoading,
+    error,
+  } = useGetUserByRoleQuery({
+    role: "coach",
+    page,
+    limit,
+    searchTerm: searchQuery, // Fixed typo: was "searTerm"
+  });
+
+  // Transform API data to match table structure
+  useEffect(() => {
+    if (coachData?.data) {
+      const transformedData = coachData.data.map((client, index) => ({
+        key: client._id || index,
+        traineeName: client.fullName || "N/A",
+        email: client.email || "N/A",
+        phoneNumber: client.phone || "N/A",
+        address: client.address || "N/A",
+        spent: "0", // You might need to calculate this from another API
+        avatar: client.image || man,
+        banned: !client.isActive,
+        createdAt: client.createdAt,
+      }));
+      setUserData(transformedData);
+    }
+  }, [coachData]);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
+    setPage(1); // Reset to first page when searching
   };
 
-  const filteredData = userData.filter(
-    (user) =>
-      user.coachName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.phoneNumber.includes(searchQuery) ||
-      user.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.earn.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Remove client-side filtering since server handles search
+  const displayData = userData;
 
   const rowSelection = {
     selectedRowKeys,
@@ -33,8 +64,8 @@ function CoachList() {
 
   // Handle edit button click
   const handleEdit = (record) => {
-    setSelectedProvider(record); // Store selected provider's data
-    setIsModalOpen(true); // Open modal
+    setSelectedProvider(record);
+    setIsModalOpen(true);
   };
 
   // Handle ban functionality
@@ -45,7 +76,7 @@ function CoachList() {
       )
     );
     alert(
-      `${provider.coachName} has been ${
+      `${provider.traineeName} has been ${
         provider.banned ? "unbanned" : "banned"
       }`
     );
@@ -65,6 +96,16 @@ function CoachList() {
     setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
     setSelectedRowKeys([]);
   };
+
+  // Show loading state
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Show error state
+  if (error) {
+    return <div>Error loading data: {error.message}</div>;
+  }
 
   return (
     <ConfigProvider
@@ -102,6 +143,7 @@ function CoachList() {
             prefix={<SearchOutlined />}
             className="h-9 gap-2"
             allowClear
+            value={searchQuery}
           />
           {selectedRowKeys.length > 0 && (
             <Button
@@ -115,19 +157,41 @@ function CoachList() {
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
-        columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
-        dataSource={filteredData}
-        pagination={{
-          defaultPageSize: 5,
-          position: ["bottomRight"],
-          size: "default",
-          total: 50,
-          showSizeChanger: true,
-          showQuickJumper: true,
+      <div className="max-h-[75vh] overflow-auto border rounded-md">
+        <Table
+          rowSelection={rowSelection}
+          columns={columns(handleEdit, handleBan)}
+          dataSource={displayData}
+          pagination={false}
+          loading={isLoading}
+        />
+      </div>
+
+      <Pagination
+        current={page}
+        pageSize={limit}
+        total={coachData?.meta?.total || 0} // Fixed path to total
+        showTotal={(total, range) =>
+          `${range[0]}-${range[1]} of ${total} items`
+        }
+        size="small"
+        align="end"
+        showSizeChanger={true}
+        showQuickJumper={true}
+        pageSizeOptions={["10", "20", "50"]}
+        onChange={(newPage, newPageSize) => {
+          setPage(newPage);
+          if (newPageSize !== limit) {
+            setLimit(newPageSize);
+          }
         }}
+        onShowSizeChange={(current, size) => {
+          setPage(1);
+          setLimit(size);
+        }}
+        className="mt-2 text-right"
       />
+
       {/* Edit Modal */}
       <ServiceEditModal
         isModalOpen={isModalOpen}
@@ -141,81 +205,71 @@ function CoachList() {
 
 export default CoachList;
 
+// Updated columns definition with additional information
 const columns = (handleEdit, handleBan) => [
   {
     title: "Name",
-    dataIndex: "coachName",
-    key: "coachName",
+    dataIndex: "traineeName",
+    key: "traineeName",
     render: (text, record) => (
       <div className="flex items-center gap-2.5">
         <Avatar
-          src={record.avatar}
+          src={`${getImageUrl}${record.avatar}`}
           alt={text}
           shape="circle"
           size={40}
           className="border border-abbes"
         />
         <div className="flex flex-col">
-          <span>{text}</span>
-          <span>{record.email}</span>
+          <span className="font-medium">{text}</span>
+          <span className="text-gray-500 text-sm">{record.email}</span>
         </div>
       </div>
     ),
   },
   {
-    title: "Category",
-    dataIndex: "category",
-    key: "category",
-  },
-  {
     title: "Phone Number",
     dataIndex: "phoneNumber",
     key: "phoneNumber",
-    render: (_, record) => <span>+{record.phoneNumber}</span>,
+    render: (phone) => <span>{phone !== "N/A" ? `+${phone}` : "N/A"}</span>,
   },
   {
     title: "Address",
     dataIndex: "address",
     key: "address",
+    render: (address) => <span className="text-sm">{address || "N/A"}</span>,
   },
   {
     title: "Earn",
-    dataIndex: "earn",
-    key: "earn",
-    render: (_, record) => <span>${record.earn}</span>,
+    dataIndex: "spent",
+    key: "spent",
+    render: (spent) => <span>${spent}</span>,
+  },
+  {
+    title: "Status",
+    dataIndex: "banned", // Fixed: should use 'banned' field
+    key: "banned",
+    render: (banned, record) => (
+      <div className="flex flex-col">
+        {banned ? (
+          <p className="flex items-center gap-4 text-red-600">
+            <HiBan size={25} />
+          </p>
+        ) : (
+          <p className="flex items-center gap-4 text-green-600">
+            <GrStatusGood size={25} />
+          </p>
+        )}
+      </div>
+    ),
   },
   {
     key: "action",
     render: (text, record) => (
       <PopOver
         onEdit={() => handleEdit(record)}
-        onBan={() => handleBan(record)} // Pass the handleBan function
+        onBan={() => handleBan(record)}
       />
     ),
-  },
-];
-
-const data = [
-  {
-    key: 1,
-    coachName: "John Doe",
-    email: "johndoe@gmail.com",
-    category: "Football Coach",
-    phoneNumber: "1234567890",
-    address: "10 Warehouse Road, Apapa, Lagos",
-    earn: "5000",
-    avatar: man,
-    banned: false, // Add banned field
-  },
-  {
-    key: 2,
-    coachName: "Jane Smith",
-    email: "janesmith@gmail.com",
-    category: "Cricket Coach",
-    phoneNumber: "1234567891",
-    address: "15 Broad Street, Lagos",
-    earn: "4500",
-    avatar: man,
-    banned: false, // Add banned field
   },
 ];
