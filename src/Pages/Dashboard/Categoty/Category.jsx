@@ -41,11 +41,7 @@ function Category() {
       id: item._id,
       name: item.name,
       serial: index + 1,
-      icon: item.image
-        ? `${getImageUrl}${
-            item.image
-          }`
-        : null,
+      icon: item.image ? `${getImageUrl}${item.image}` : null,
       type: item.type,
       count: item.count,
       createdAt: item.createdAt,
@@ -160,7 +156,7 @@ function Category() {
       dataIndex: "icon",
       key: "icon",
       render: (icon) => (
-        <div className="w-[60px] h-[60px] flex items-center justify-center">
+        <div className="w-[60px] h-[60px] flex items-center justify-center overflow-hidden">
           {icon ? (
             <img
               width={60}

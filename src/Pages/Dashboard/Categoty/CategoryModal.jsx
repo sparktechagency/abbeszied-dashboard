@@ -165,9 +165,9 @@ function CategoryModal({
               className="h-10"
               disabled={isLoading}
             >
-              <Option value="corporate">Client</Option>
+              <Option value="corporate">Corporate</Option>
               <Option value="coach">Coach</Option>
-              <Option value="store">Coach</Option>
+              <Option value="store">Store</Option>
             </Select>
           </Form.Item>
 

@@ -230,7 +230,7 @@ function TraineeList() {
 export default TraineeList;
 
 // Updated columns definition with additional information
-const columns = (handleEdit, handleBan) => [
+const columns = (handleEdit, handleBan, isBanLoading) => [
   {
     title: "Name",
     dataIndex: "traineeName",
