@@ -294,7 +294,6 @@ const BookingListTable = () => {
             allowClear
             style={{ width: 200, height: 40 }}
           />
-          <SelectDuration />
         </div>
       </div>
 
