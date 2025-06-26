@@ -1,62 +1,68 @@
 import { api } from "../api/baseApi";
 
-
 const bannerSlice = api.injectEndpoints({
-    endpoints: (builder)=>({
-        createBanner: builder.mutation({
-            query: (bannerData)=> {
-                return{
-                    url: "/banner/create-banner",
-                    method: "POST",
-                    body: bannerData,
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        deleteBanner: builder.mutation({
-            query: (id)=> {
-                return{
-                    url: `/banner/delete-banner/${id}`,
-                    method: "DELETE",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        banners: builder.query({
-            query: ()=> {
-                return{
-                    url: "/banner/get-banner",
-                    method: "GET",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            },
-            transformResponse: ({data})=>{
-                return data
-            }
-        }),
-        updateStatus: builder.mutation({
-            query: (id)=> {
-                return{
-                    url: `/banner/${id}`,
-                    method: "PATCH",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-    })
-})
+  endpoints: (builder) => ({
+    createBanner: builder.mutation({
+      query: (bannerData) => {
+        return {
+          url: "/banner/",
+          method: "POST",
+          body: bannerData,
+        };
+      },
+      invalidatesTags: ["Banner"],
+    }),
+
+    updateBanner: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/banner/${id}`,
+          method: "PATCH", // or PATCH depending on your API
+          body: data,
+        };
+      },
+      invalidatesTags: ["Banner"],
+    }),
+
+    deleteBanner: builder.mutation({
+      query: (id) => {
+        return {
+          url: `/banner/${id}`,
+          method: "DELETE",
+        };
+      },
+      invalidatesTags: ["Banner"],
+    }),
+
+    getBanners: builder.query({
+      query: (type) => {
+        return {
+          url: `/banner/?type=${type}`,
+          method: "GET",
+        };
+      },
+      transformResponse: ({ data }) => {
+        return data;
+      },
+      providesTags: ["Banner"],
+    }),
+
+    updateStatus: builder.mutation({
+      query: (id) => {
+        return {
+          url: `/banner/${id}`,
+          method: "PATCH",
+        };
+      },
+      invalidatesTags: ["Banner"],
+    }),
+  }),
+});
 
 export const {
-    useCreateBannerMutation,
-    useDeleteBannerMutation,
-    useBannersQuery,
-    useUpdateStatusMutation
+  useCreateBannerMutation,
+  useUpdateBannerMutation,
+  useDeleteBannerMutation,
+  useGetBannersQuery,
+  useUpdateStatusMutation,
 } = bannerSlice;

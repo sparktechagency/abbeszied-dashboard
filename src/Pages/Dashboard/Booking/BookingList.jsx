@@ -77,7 +77,7 @@ function BookingList() {
           <Card key={item._id} item={item} />
         ))}
       </div>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white rounded-xl max-h-[60vh] shadow-sm border border-gray-100 ">
         <BookigListTable />
       </div>
     </div>

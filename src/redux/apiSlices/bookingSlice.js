@@ -12,9 +12,9 @@ const bookingSlice = api.injectEndpoints({
       providesTags: ["BOOKING"],
     }),
     getAllBooking: builder.query({
-      query: () => {
+      query: ({ page, limit }) => {
         return {
-          url: "/booking",
+          url: `/booking?page=${page}&limit=${limit}`,
           method: "GET",
         };
       },
