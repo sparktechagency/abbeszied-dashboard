@@ -10,8 +10,6 @@ const ResetPassword = () => {
 
   const onFinish = async (values) => {
     const { newPassword, confirmPassword } = values;
-    const token = localStorage.getItem("resetToken");
-    console.log("resetToken", token);
 
     try {
       const res = await resetPassword({
@@ -21,7 +19,7 @@ const ResetPassword = () => {
 
       if (res.success) {
         message.success("Password reset successful");
-        localStorage.removeItem("resetToken");
+        localStorage.clear();
         navigate(`/auth/login`);
       } else {
         message.error("Password reset failed");
