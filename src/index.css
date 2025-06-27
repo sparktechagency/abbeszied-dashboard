@@ -294,3 +294,35 @@ p {
   .ant-select-selector:focus-within {
   border: 1px solid #fc7d01 !important;
 }
+
+/* Base Checkbox Style */
+.ant-checkbox-inner {
+  /* border-radius: 50% !important; Make checkbox round */
+  /* border-color: #0100fa !important; Custom border color */
+  width: 18px; /* Size */
+  height: 18px; /* Size */
+  background-color: #f0f0f0 !important; /* Default background */
+  transition: background-color 0.3s ease;
+}
+
+/* Checked State */
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #fc7d01 !important; /* Custom checked background */
+  border-color: #fc7d01 !important; /* Same border color as checked */
+}
+
+/* Checked State - Tick mark color */
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: white !important; /* Custom tick color */
+}
+
+/* Hover Effect */
+.ant-checkbox:hover .ant-checkbox-inner {
+  border-color: #737791 !important; /* Hover border color */
+}
+
+/* Disabled Checkbox */
+.ant-checkbox-disabled .ant-checkbox-inner {
+  background-color: #dcdcdc !important;
+  border-color: #a6a6a6 !important;
+}

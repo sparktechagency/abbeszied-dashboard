@@ -1,4 +1,3 @@
-import React from "react";
 import SidebarContent from "./SidebarContent";
 // import { Outlet, useParams } from "react-router-dom";
 import ChatRoom from "./ChatRoom";
