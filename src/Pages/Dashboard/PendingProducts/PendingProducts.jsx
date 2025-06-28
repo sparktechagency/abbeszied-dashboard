@@ -1,5 +1,13 @@
 import { useState, useMemo } from "react";
-import { Table, ConfigProvider, Input, Button, Tooltip, message } from "antd";
+import {
+  Table,
+  ConfigProvider,
+  Input,
+  Button,
+  Tooltip,
+  message,
+  Pagination,
+} from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import { LuX, LuCheck } from "react-icons/lu";
@@ -11,7 +19,7 @@ import {
   useGetProductsQuery,
   useUpdateProductMutation,
 } from "../../../redux/apiSlices/productSlice";
-import { imageUrl } from "../../../redux/api/baseApi";
+
 import { getImageUrl } from "../../../utils/baseUrl";
 
 function PendingProducts() {
@@ -19,6 +27,8 @@ function PendingProducts() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // RTK Query will automatically re-render when data changes
   const {
@@ -26,7 +36,7 @@ function PendingProducts() {
     isLoading,
     isError,
     refetch,
-  } = useGetProductsQuery();
+  } = useGetProductsQuery({ page, limit });
 
   // Transform API data to match table structure
   const transformedData = useMemo(() => {
@@ -38,9 +48,11 @@ function PendingProducts() {
       category: product.category || "N/A",
       submittedBy: product.sellerId?.fullName || "Unknown Seller",
       price: `Qar ${product.price || 0}`,
-      productImage: product.images?.[0]
-        ? `${getImageUrl}${product?.images[0]}`
-        : shoe,
+      // Fixed image URL handling
+      productImage:
+        product?.images && product.images.length > 0
+          ? `${getImageUrl}${product.images[0]}`
+          : shoe,
       condition: product.condition || "N/A",
       description: product.description || "N/A",
       location: product.location || "N/A",
@@ -53,6 +65,9 @@ function PendingProducts() {
       originalData: product,
     }));
   }, [productData?.data]);
+
+  console.log("Transformed data:", transformedData);
+  console.log("Sample product image:", transformedData[0]?.productImage);
 
   // Open the modal and set the selected product data
   const handleModalOpen = (record) => {
@@ -156,18 +171,33 @@ function PendingProducts() {
       dataIndex: "productImage",
       key: "productImage",
       width: "12%",
-      render: (_, record) => (
-        <img
-          src={record.productImage}
-          width={80}
-          height={80}
-          alt={record.productName}
-          style={{ objectFit: "cover", borderRadius: "4px" }}
-          onError={(e) => {
-            e.target.src = shoe;
-          }}
-        />
-      ),
+      render: (_, record) => {
+        console.log(
+          "Rendering image for:",
+          record.productName,
+          "URL:",
+          record.productImage
+        );
+        return (
+          <img
+            src={record.productImage}
+            width={80}
+            height={80}
+            alt={record.productName}
+            style={{ objectFit: "cover", borderRadius: "4px" }}
+            // onError={(e) => {
+            //   console.log(
+            //     "Image failed to load, using fallback:",
+            //     e.target.src
+            //   );
+            //   e.target.src = shoe;
+            // }}
+            onLoad={() => {
+              console.log("Image loaded successfully:", record.productImage);
+            }}
+          />
+        );
+      },
     },
     {
       title: "Category",
@@ -319,18 +349,33 @@ function PendingProducts() {
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredData}
-        pagination={{
-          defaultPageSize: 10,
-          position: ["bottomRight"],
-          size: "default",
-          total: filteredData.length,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          pageSizeOptions: ["5", "10", "20", "50"],
-        }}
+        pagination={false}
         scroll={{ x: 1000 }}
       />
-
+      <Pagination
+        current={page}
+        pageSize={limit}
+        total={productData?.meta?.total || 0}
+        showTotal={(total, range) =>
+          `${range[0]}-${range[1]} of ${total} items`
+        }
+        size="small"
+        align="end"
+        showSizeChanger={true}
+        showQuickJumper={true}
+        pageSizeOptions={["10", "20", "50"]}
+        onChange={(newPage, newPageSize) => {
+          setPage(newPage);
+          if (newPageSize !== limit) {
+            setLimit(newPageSize);
+          }
+        }}
+        onShowSizeChange={(current, size) => {
+          setPage(1);
+          setLimit(size);
+        }}
+        className="mt-2 text-right"
+      />
       <PendingProductsModal
         isModalOpen={isModalOpen}
         handleCancel={() => setIsModalOpen(false)}

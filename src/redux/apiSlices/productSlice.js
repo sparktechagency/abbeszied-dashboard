@@ -32,9 +32,9 @@ const productSlice = api.injectEndpoints({
       invalidatesTags: ["PRODUCTS"],
     }),
     getProducts: builder.query({
-      query: () => {
+      query: ({ page, limit }) => {
         return {
-          url: "/products-managments",
+          url: `/products-managments?page=${page}&limit=${limit}`,
           method: "GET",
         };
       },

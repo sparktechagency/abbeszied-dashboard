@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Table, ConfigProvider, Input, Button, Tooltip, message } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
-import shoe from "../../../assets/shoe.png";
+// import shoe from "../../../assets/shoe.png";
 import ProductsDetailsModal from "./ProductsDetailsModal";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { CgEye } from "react-icons/cg";
@@ -17,13 +17,14 @@ function ProductList() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
-
+  const [page, setPage] = useState(1);
+  const [limit, setlimit] = useState(20);
   const {
     data: productData,
     isLoading,
     isError,
     refetch,
-  } = useGetProductsQuery();
+  } = useGetProductsQuery({ page, limit });
 
   const [deleteProduct] = useDeleteProductMutation();
 
@@ -43,7 +44,7 @@ function ProductList() {
           price: `Qar ${product.price || 0}`,
           productImage: product.images?.[0]
             ? `${getImageUrl}${product?.images[0]}`
-            : shoe,
+            : null,
           description: product.description || "N/A",
           location: product.location || "N/A",
           status: product.status || "N/A",
