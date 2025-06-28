@@ -9,25 +9,69 @@ import {
   CartesianGrid,
 } from "recharts";
 import PickDate from "../../../components/common/PickDate";
+import { useClientCoachGraphQuery } from "../../../redux/apiSlices/dashboardSlice";
 
 function TraineeAndCoaches() {
   // Track which bar set is active - can be "Customer", "ServiceProvider", or "both"
+  const [selectedYear, setSelectedYear] = useState("2025");
   const [activeView, setActiveView] = useState("both");
 
-  const data = [
-    { month: "Jan", Trainee: 4000, Players: 2400 },
-    { month: "Feb", Trainee: 3000, Players: 1398 },
-    { month: "Mar", Trainee: 2000, Players: 9800 },
-    { month: "Apr", Trainee: 2780, Players: 3908 },
-    { month: "May", Trainee: 1890, Players: 4800 },
-    { month: "Jun", Trainee: 2390, Players: 3800 },
-    { month: "Jul", Trainee: 3490, Players: 4300 },
-    { month: "Aug", Trainee: 2000, Players: 9800 },
-    { month: "Sep", Trainee: 2780, Players: 3908 },
-    { month: "Oct", Trainee: 1890, Players: 4800 },
-    { month: "Nov", Trainee: 2390, Players: 3800 },
-    { month: "Dec", Trainee: 3490, Players: 4300 },
-  ];
+  const {
+    data: clientCoachGraph,
+    isLoading,
+    error,
+  } = useClientCoachGraphQuery({
+    year: selectedYear,
+  });
+
+  // Transform API data to chart format
+  const transformApiDataToChart = (apiData) => {
+    if (!apiData?.data) return [];
+
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    return apiData.data.map((monthData, index) => {
+      const monthKey = Object.keys(monthData)[0]; // e.g., "january"
+      const monthInfo = monthData[monthKey];
+
+      return {
+        month: monthNames[index],
+        Trainee: monthInfo.client_count,
+        Players: monthInfo.coach_count,
+      };
+    });
+  };
+
+  // Use API data if available, otherwise use default data
+  const chartData = clientCoachGraph
+    ? transformApiDataToChart(clientCoachGraph)
+    : [
+        { month: "Jan", Trainee: 0, Players: 0 },
+        { month: "Feb", Trainee: 0, Players: 0 },
+        { month: "Mar", Trainee: 0, Players: 0 },
+        { month: "Apr", Trainee: 0, Players: 0 },
+        { month: "May", Trainee: 0, Players: 0 },
+        { month: "Jun", Trainee: 0, Players: 0 },
+        { month: "Jul", Trainee: 0, Players: 0 },
+        { month: "Aug", Trainee: 0, Players: 0 },
+        { month: "Sep", Trainee: 0, Players: 0 },
+        { month: "Oct", Trainee: 0, Players: 0 },
+        { month: "Nov", Trainee: 0, Players: 0 },
+        { month: "Dec", Trainee: 0, Players: 0 },
+      ];
 
   // Handle radio button clicks
   const handleRadioClick = (viewType) => {
@@ -94,35 +138,45 @@ function TraineeAndCoaches() {
       <div className="flex items-center justify-between px-6 mt-5 relative">
         <h1 className="text-2xl text-abbes font-semibold">Trainee & Coaches</h1>
         <CustomLegend />
-        <PickDate />
+        <PickDate setSelectedYear={setSelectedYear} />
       </div>
 
       <div className="w-full h-full py-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid
-              strokeDasharray="none"
-              strokeWidth={0.2}
-              vertical={false}
-            />
-            <XAxis dataKey="month" style={{ fontSize: "14px" }} />
-            <YAxis hide={false} style={{ fontSize: "14px" }} />
-            <Tooltip
-              content={<CustomTooltip />}
-              isAnimationActive={true}
-              cursor={false}
-            />
-            {showCustomer && (
-              <Bar dataKey="Trainee" fill="#fd7d00" barSize={35} radius={4} />
-            )}
-            {showServiceProvider && (
-              <Bar dataKey="Players" fill="#ffd6af" barSize={35} radius={4} />
-            )}
-          </BarChart>
-        </ResponsiveContainer>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-lg">Loading...</div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-lg text-red-500">Error loading data</div>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid
+                strokeDasharray="none"
+                strokeWidth={0.2}
+                vertical={false}
+              />
+              <XAxis dataKey="month" style={{ fontSize: "14px" }} />
+              <YAxis hide={false} style={{ fontSize: "14px" }} />
+              <Tooltip
+                content={<CustomTooltip />}
+                isAnimationActive={true}
+                cursor={false}
+              />
+              {showCustomer && (
+                <Bar dataKey="Trainee" fill="#fd7d00" barSize={35} radius={4} />
+              )}
+              {showServiceProvider && (
+                <Bar dataKey="Players" fill="#ffd6af" barSize={35} radius={4} />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </>
   );
@@ -148,7 +202,7 @@ const CustomTooltip = ({ active, payload }) => {
                   : "border rounded-md px-1  text-[#ffd6af]"
               } text-[14px] bg-white flex flex-col gap-1`}
             >
-              {pld.value}K
+              {pld.value}
             </div>
           ))}
         </div>
