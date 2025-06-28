@@ -235,7 +235,7 @@ function ChatRoom() {
   const user = location.state?.user || {};
 
   // Get current user ID from your auth system
-  const currentUserId = "your-current-user-id"; // Replace with actual user ID
+  const currentUserId = "685014e7a521947211c373b1"; // Replace with actual user ID
 
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");

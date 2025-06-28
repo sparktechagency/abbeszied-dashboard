@@ -1,4 +1,4 @@
-import { Button, Form, Input, ConfigProvider } from "antd";
+import { Button, Form, Input, ConfigProvider, message } from "antd";
 import { MdLock } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useResetPasswordMutation } from "../../redux/apiSlices/authSlice";
@@ -11,10 +11,15 @@ const ResetPassword = () => {
   const onFinish = async (values) => {
     const { newPassword, confirmPassword } = values;
 
+    // Only proceed if passwords match
+    if (newPassword !== confirmPassword) {
+      message.error("Passwords do not match!");
+      return;
+    }
+
     try {
       const res = await resetPassword({
-        newPassword,
-        confirmPassword,
+        password: newPassword, // Send the new password
       }).unwrap();
 
       if (res.success) {
@@ -79,7 +84,6 @@ const ResetPassword = () => {
                 <MdLock className="border-r-2 w-full h-10 mr-2  p-2 -ml-2 text-abbes " />
               }
               placeholder="Enter New password"
-              // className="border-[#E0E4EC] hover:border-abbes h-10 bg-white rounded-lg outline-none "
               className="border-[#E0E4EC] focus:border-orange-500 hover:border-orange-500 h-10 bg-white rounded-lg outline-none"
             />
           </Form.Item>
@@ -123,14 +127,6 @@ const ResetPassword = () => {
                 <MdLock className="border-r-2 w-full h-10 mr-2  p-2 -ml-2 text-abbes " />
               }
               placeholder="Enter Confirm password"
-              // style={{
-              //   border: "1px solid #E0E4EC",
-              //   height: "52px",
-              //   background: "white",
-              //   borderRadius: "8px",
-              //   outline: "none",
-              // }}
-              // className="border-[#E0E4EC] hover:border-abbes h-10 bg-white rounded-lg outline-none "
               className="border-[#E0E4EC] focus:border-orange-500 hover:border-orange-500 h-10 bg-white rounded-lg outline-none"
             />
           </Form.Item>
