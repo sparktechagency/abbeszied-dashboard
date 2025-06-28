@@ -3,6 +3,7 @@ import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
 import { useChangePasswordMutation } from "../../../redux/apiSlices/authSlice";
 import { useNavigate } from "react-router-dom";
+
 function AdminPassword() {
   const navigation = useNavigate();
   const [form] = Form.useForm();
@@ -18,10 +19,29 @@ function AdminPassword() {
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
+
+      // Additional check to ensure passwords match
+      if (values.newPassword !== values.confirmPassword) {
+        message.error("New password and confirm password do not match!");
+        return;
+      }
+
       const trimmedValues = {
         oldPassword: values.currentPassword.trim(),
         newPassword: values.newPassword.trim(),
       };
+
+      // Validate that passwords are not empty after trimming
+      if (!trimmedValues.oldPassword || !trimmedValues.newPassword) {
+        message.error("Passwords cannot be empty or contain only spaces!");
+        return;
+      }
+
+      // Additional validation: ensure new password is different from old password
+      if (trimmedValues.oldPassword === trimmedValues.newPassword) {
+        message.error("New password must be different from current password!");
+        return;
+      }
 
       console.log("Password Update Request:", trimmedValues);
 
@@ -32,7 +52,7 @@ function AdminPassword() {
       if (response.success) {
         message.success("Password updated successfully!");
         form.resetFields();
-        navigation("/auth/longin");
+        navigation("/auth/login"); // Fixed typo: "longin" -> "login"
       }
     } catch (error) {
       console.error("Password update failed:", error);
@@ -95,6 +115,18 @@ function AdminPassword() {
                   required: true,
                   message: "Please enter your current password!",
                 },
+                {
+                  validator: (_, value) => {
+                    if (value && value.trim().length === 0) {
+                      return Promise.reject(
+                        new Error(
+                          "Password cannot be empty or contain only spaces!"
+                        )
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]}
               className="w-[80%]"
             >
@@ -106,6 +138,7 @@ function AdminPassword() {
                 }
               />
             </Form.Item>
+
             {/* New Password */}
             <Form.Item
               label="New Password"
@@ -115,6 +148,25 @@ function AdminPassword() {
                 {
                   min: 6,
                   message: "Password must be at least 6 characters long!",
+                },
+                {
+                  validator: (_, value) => {
+                    if (value && value.trim().length === 0) {
+                      return Promise.reject(
+                        new Error(
+                          "Password cannot be empty or contain only spaces!"
+                        )
+                      );
+                    }
+                    if (value && value.trim().length < 6) {
+                      return Promise.reject(
+                        new Error(
+                          "Password must be at least 6 characters long after trimming spaces!"
+                        )
+                      );
+                    }
+                    return Promise.resolve();
+                  },
                 },
               ]}
               className="w-[80%]"
@@ -127,7 +179,8 @@ function AdminPassword() {
                 }
               />
             </Form.Item>
-            {/* Confirm New Password
+
+            {/* Confirm New Password */}
             <Form.Item
               label="Confirm New Password"
               name="confirmPassword"
@@ -155,7 +208,8 @@ function AdminPassword() {
                   visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
                 }
               />
-            </Form.Item> */}
+            </Form.Item>
+
             {/* Buttons: Cancel & Save */}
             <Flex justify="flex-end" className="w-[80%] gap-4">
               <ButtonEDU actionType="cancel" onClick={handleCancel}>
