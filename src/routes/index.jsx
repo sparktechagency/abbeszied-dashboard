@@ -25,7 +25,7 @@ import CoachList from "../Pages/Dashboard/Coach/CoachList.jsx";
 import CorporateList from "../Pages/Dashboard/CorporateList/CorporateList.jsx";
 import CertificateList from "../Pages/Dashboard/CertificateReview/CertificateList.jsx";
 import Category from "../Pages/Dashboard/Categoty/Category.jsx";
-import Users from "../Pages/Dashboard/User/Users.jsx";
+
 import PendingProducts from "../Pages/Dashboard/PendingProducts/PendingProducts.jsx";
 import ProductList from "../Pages/Dashboard/ProductList/ProductList.jsx";
 import AboutUs from "../Pages/Dashboard/AboutUs/AboutUs.jsx";

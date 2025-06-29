@@ -10,7 +10,7 @@ const userManagementSlice = api.injectEndpoints({
           body: { status },
         };
       },
-      invalidatesTags: ["USER"],
+      invalidatesTags: ["USER_MANAGEMENT"],
     }),
     deleteUser: builder.mutation({
       query: (id) => {
@@ -19,7 +19,7 @@ const userManagementSlice = api.injectEndpoints({
           method: "DELETE",
         };
       },
-      invalidatesTags: ["USER"],
+      invalidatesTags: ["USER_MANAGEMENT"],
     }),
     getUserByRole: builder.query({
       query: ({ role, page, limit, searchTerm }) => {
@@ -39,7 +39,7 @@ const userManagementSlice = api.injectEndpoints({
           method: "GET",
         };
       },
-      providesTags: ["USER"],
+      providesTags: ["USER_MANAGEMENT"],
     }),
   }),
 });

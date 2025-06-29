@@ -67,25 +67,6 @@ const authSlice = api.injectEndpoints({
 
       invalidatesTags: ["User"],
     }),
-
-    updateProfile: builder.mutation({
-      query: (data) => {
-        return {
-          method: "PATCH",
-          url: "/user/profile",
-          body: data,
-        };
-      },
-    }),
-
-    profile: builder.query({
-      query: () => {
-        return {
-          method: "GET",
-          url: "/user/profile",
-        };
-      },
-    }),
   }),
 });
 

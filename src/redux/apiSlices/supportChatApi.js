@@ -1,55 +1,3 @@
-// import { api } from "../api/baseApi";
-
-// const supportChatSlice = api.injectEndpoints({
-//   endpoints: (builder) => ({
-//     sendMessage: builder.mutation({
-//       query: ({ id, message }) => {
-//         return {
-//           url: `/messages/send-message/${id}`,
-//           method: "POST",
-//           body: message,
-//         };
-//       },
-//       invalidatesTags: ["CHAT"],
-//     }),
-//     editMessage: builder.mutation({
-//       query: ({ id, editedMessage }) => {
-//         return {
-//           url: `/messages/send-message/${id}`,
-//           method: "PATCH",
-//           body: editedMessage,
-//         };
-//       },
-//       invalidatesTags: ["CHAT"],
-//     }),
-//     deleteMessage: builder.mutation({
-//       query: (id) => {
-//         return {
-//           url: `/messages/delete/${id}`,
-//           method: "DELETE",
-//         };
-//       },
-//       invalidatesTags: ["CHAT"],
-//     }),
-//     getMessage: builder.query({
-//       query: (id) => {
-//         return {
-//           url: `/messages/${id}`,
-//           method: "GET",
-//         };
-//       },
-//       providesTags: ["CHAT"],
-//     }),
-//   }),
-// });
-
-// export const {
-//   useGetMessageQuery,
-//   useSendMessageMutation,
-//   useEditMessageMutation,
-//   useDeleteMessageMutation,
-// } = supportChatSlice;
-
 import { api } from "../api/baseApi";
 
 const supportChatSlice = api.injectEndpoints({
@@ -146,8 +94,8 @@ const supportChatSlice = api.injectEndpoints({
 
     // Get chat list for sidebar
     getChatList: builder.query({
-      query: (userId) => ({
-        url: `/chats/user/${userId}`,
+      query: () => ({
+        url: `/chat`,
         method: "GET",
       }),
       providesTags: ["CHAT_LIST"],

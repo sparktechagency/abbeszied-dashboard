@@ -221,7 +221,7 @@ import { Avatar, message as antMessage } from "antd";
 import { FaRegSmile, FaPaperclip, FaPaperPlane } from "react-icons/fa";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-
+import { jwtDecode } from "jwt-decode";
 import { useChatSocket } from "./customHook";
 import {
   useGetMessageQuery,
@@ -234,8 +234,10 @@ function ChatRoom() {
   const location = useLocation();
   const user = location.state?.user || {};
 
+  const { userId } = jwtDecode(localStorage.getItem("accessToken"));
+  console.log("sfsdf", userId);
   // Get current user ID from your auth system
-  const currentUserId = "685014e7a521947211c373b1"; // Replace with actual user ID
+  const currentUserId = userId; // Replace with actual user ID
 
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");

@@ -1,31 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import man from "../../../assets/man.png";
 import { Button, ConfigProvider, Form, Input, Upload, message } from "antd";
 import { HiMiniPencil } from "react-icons/hi2";
-import { useUser } from "../../../provider/User";
 import { MdCameraEnhance } from "react-icons/md";
-// import {
-//   useProfileQuery,
-//   useUpdateProfileMutation,
-// } from "../../../redux/apiSlices/authApi";
 import { getImageUrl } from "../../../utils/baseUrl";
+import {
+  useProfileQuery,
+  useUpdateProfileMutation,
+} from "../../../redux/apiSlices/userSlice";
 
 function Profile() {
   const [showButton, setShowButton] = useState(false);
   const [uploadedImage, setUploadedImage] = useState(null);
-  const user = useUser() || {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phoneNumber: "+1234567890",
-    role: "Admin",
-    image: null,
-  };
 
-  // // Add refetch capability and loading/error states
-  // const { data: userProfile, isLoading, error, refetch } = useProfileQuery();
-  // console.log("Profile data:", userProfile?.data);
+  // Add refetch capability and loading/error states
+  const { data: userProfile, isLoading, error, refetch } = useProfileQuery();
+  console.log("Profile data:", userProfile?.data);
 
-  // const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 
   // Handle image upload with better validation
   const handleImageUpload = (file) => {
@@ -52,102 +44,128 @@ function Profile() {
     setUploadedImage(null);
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center min-h-72">
-  //       Loading profile...
-  //     </div>
-  //   );
-  // }
-
-  // if (error) {
-  //   return (
-  //     <div className="flex flex-col justify-center items-center min-h-72">
-  //       <p>Error loading profile</p>
-  //       <Button onClick={() => refetch()} className="mt-2">
-  //         Retry
-  //       </Button>
-  //     </div>
-  //   );
-  // }
-
-  return (
-    <div className="bg-quilocoP w-full min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg overflow-hidden">
-      {/* Fixed header section with consistent height */}
-      <div className="w-full flex flex-col items-center pt-6 pb-4">
-        <div className="relative flex flex-col items-center justify-center">
-          {/* Fixed image container with consistent dimensions */}
-          <div className="relative w-[120px] h-[120px] border border-slate-500 rounded-full overflow-hidden">
-            <img
-              src={
-                uploadedImage
-                  ? URL.createObjectURL(uploadedImage)
-                  : userProfile?.data?.image
-                  ? `${getImageUrl}${userProfile?.data?.image}`
-                  : man
-              }
-              className="w-full h-full object-cover"
-              alt="Profile"
-            />
-          </div>
-
-          {showButton && (
-            <Upload
-              showUploadList={false}
-              beforeUpload={handleImageUpload}
-              accept="image/*"
-            >
-              <button type="button" className="absolute top-[5rem] left-[6rem]">
-                <MdCameraEnhance
-                  size={30}
-                  className="text-white border rounded-full bg-smart p-1 hover:bg-smart/80 transition-colors"
-                />
-              </button>
-            </Upload>
-          )}
-        </div>
-
-        {/* Fixed height container for name to prevent layout shift */}
-        <div className="h-[2.5rem] flex items-center mt-3">
-          <h3 className="text-black text-xl text-center">
-            {userProfile?.data?.name || "User Name"}
-          </h3>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-72">
+        Loading profile...
       </div>
+    );
+  }
 
-      <div className="w-full flex justify-end mb-4">
-        <Button
-          onClick={() => {
-            if (showButton) {
-              handleCancelEdit();
-            } else {
-              setShowButton(true);
-            }
-          }}
-          icon={
-            showButton ? null : (
-              <HiMiniPencil size={20} className="text-white" />
-            )
-          }
-          className="bg-smart/80 border-none text-white min-w-20 min-h-8 text-xs rounded-lg hover:bg-smart transition-colors"
-        >
-          {showButton ? "Cancel" : "Edit Profile"}
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-72">
+        <p>Error loading profile</p>
+        <Button onClick={() => refetch()} className="mt-2">
+          Retry
         </Button>
       </div>
+    );
+  }
 
-      {/* Form container with max width and proper spacing */}
-      <div className="w-full max-w-full px-2">
-        <ProfileDetails
-          showButton={showButton}
-          setShowButton={setShowButton}
-          user={userProfile?.data}
-          uploadedImage={uploadedImage}
-          setUploadedImage={setUploadedImage}
-          isUpdating={isUpdating}
-          refetchProfile={refetch}
-        />
+  return (
+    <ConfigProvider
+      theme={{
+        components: {
+          Form: {
+            labelColor: "#000000",
+          },
+          Input: {
+            colorText: "#000000",
+            colorBgBase: "#ffffff",
+            colorBorder: "#000000",
+            boxShadow: "none",
+          },
+          Button: {
+            defaultHoverBg: "#fd7d00",
+            defaultActiveColor: "white",
+            defaultBg: "#fd7d00",
+            defaultHoverColor: "white",
+          },
+        },
+      }}
+    >
+      <div className="bg-quilocoP w-full min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg overflow-hidden">
+        {/* Fixed header section with consistent height */}
+        <div className="w-full flex flex-col items-center pt-6 pb-4">
+          <div className="relative flex flex-col items-center justify-center">
+            {/* Fixed image container with consistent dimensions */}
+            <div className="relative w-[120px] h-[120px] border border-slate-500 rounded-full overflow-hidden">
+              <img
+                src={
+                  uploadedImage
+                    ? URL.createObjectURL(uploadedImage)
+                    : userProfile?.data?.image
+                    ? `${getImageUrl}${userProfile?.data?.image}`
+                    : man
+                }
+                className="w-full h-full object-cover"
+                alt="Profile"
+              />
+            </div>
+
+            {showButton && (
+              <Upload
+                showUploadList={false}
+                beforeUpload={handleImageUpload}
+                accept="image/*"
+              >
+                <button
+                  type="button"
+                  className="absolute top-[5rem] left-[6rem]"
+                >
+                  <MdCameraEnhance
+                    size={30}
+                    className="text-white border rounded-full bg-abbes p-1 hover:bg-abbes/80 transition-colors"
+                  />
+                </button>
+              </Upload>
+            )}
+          </div>
+
+          {/* Fixed height container for name to prevent layout shift */}
+          <div className="h-[2.5rem] flex items-center mt-3">
+            <h3 className="text-black text-xl text-center">
+              {userProfile?.data?.fullName || "User Name"}
+            </h3>
+          </div>
+        </div>
+
+        <div className="w-full flex justify-end mb-4">
+          <Button
+            onClick={() => {
+              if (showButton) {
+                handleCancelEdit();
+              } else {
+                setShowButton(true);
+              }
+            }}
+            icon={
+              showButton ? null : (
+                <HiMiniPencil size={20} className="text-white" />
+              )
+            }
+            className="bg-abbes/80 border-none text-white min-w-20 min-h-8 text-xs rounded-lg hover:bg-abbes hover:text-white transition-colors"
+          >
+            {showButton ? "Cancel" : "Edit Profile"}
+          </Button>
+        </div>
+
+        {/* Form container with max width and proper spacing */}
+        <div className="w-full max-w-full px-2">
+          <ProfileDetails
+            showButton={showButton}
+            setShowButton={setShowButton}
+            user={userProfile?.data}
+            uploadedImage={uploadedImage}
+            setUploadedImage={setUploadedImage}
+            isUpdating={isUpdating}
+            refetchProfile={refetch}
+            updateProfile={updateProfile} // Pass the mutation function
+          />
+        </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 }
 
@@ -161,16 +179,15 @@ const ProfileDetails = ({
   setUploadedImage,
   isUpdating,
   refetchProfile,
+  updateProfile, // Receive the mutation function as prop
 }) => {
   const [form] = Form.useForm();
-  const { updateUser } = useUser();
-  const [updateProfile] = useUpdateProfileMutation();
 
   // Set form values whenever user data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       form.setFieldsValue({
-        name: user.name || "",
+        name: user.fullName || "",
         email: user.email || "",
         phone: user.phone || "",
         role: user.role || "",
@@ -184,7 +201,7 @@ const ProfileDetails = ({
 
       // Always include the data object
       const data = {
-        name: values.name?.trim(),
+        fullName: values.name?.trim(),
         phone: values.phone?.trim(),
       };
 
@@ -204,11 +221,6 @@ const ProfileDetails = ({
         message.success("Profile updated successfully!");
         setShowButton(false);
         setUploadedImage(null);
-
-        // Update user context if available
-        if (updateUser && response.data) {
-          updateUser(response.data);
-        }
 
         // Refetch profile data to ensure UI is updated
         if (refetchProfile) {
@@ -240,6 +252,12 @@ const ProfileDetails = ({
             colorBorder: "#000000",
             boxShadow: "none",
           },
+          Button: {
+            defaultHoverBg: "#fd7d00",
+            defaultActiveColor: "white",
+            defaultBg: "#fd7d00",
+            defaultHoverColor: "white",
+          },
         },
       }}
     >
@@ -262,7 +280,7 @@ const ProfileDetails = ({
             ]}
           >
             <Input
-              className="bg-white border border-black h-8 rounded-lg focus:border-smart text-sm"
+              className="bg-white border border-black h-8 rounded-lg focus:border-abbes text-sm"
               readOnly={!showButton}
               style={{ color: "black" }}
               placeholder="Enter your name"
@@ -297,7 +315,7 @@ const ProfileDetails = ({
             ]}
           >
             <Input
-              className="bg-white border border-black h-8 rounded-lg focus:border-smart text-sm"
+              className="bg-white border border-black h-8 rounded-lg focus:border-abbes text-sm"
               readOnly={!showButton}
               style={{ color: "black" }}
               placeholder="Enter phone number"
@@ -324,7 +342,7 @@ const ProfileDetails = ({
               block
               htmlType="submit"
               loading={isUpdating}
-              className="bg-smart hover:bg-smart/80 border-none text-white min-w-20 min-h-10 text-sm rounded-lg font-medium transition-colors"
+              className="bg-abbes hover:bg-abbes/80 border-none text-white min-w-20 min-h-10 text-sm rounded-lg font-medium transition-colors"
             >
               {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
