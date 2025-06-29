@@ -1,68 +1,75 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa6";
 import {
   Flex,
   Input,
   Table,
   Popover,
-  Button,
   Modal,
-  Form,
   ConfigProvider,
   message,
-  Select,
+  Spin,
 } from "antd";
-import { MoreOutlined, DeleteFilled, EditFilled } from "@ant-design/icons";
+import { MoreOutlined } from "@ant-design/icons";
 
 import ButtonEDU from "../../../components/common/ButtonEDU";
-import { FiEdit2 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import AdminModal from "./AdminModal";
+import {
+  useCreateAdminMutation,
+  useGetAllAdminQuery,
+  useDeleteAdminMutation,
+} from "../../../redux/apiSlices/adminSlice";
 
 const AdminList = () => {
-  // Initial data
-  const initialData = [
-    {
-      key: 1,
-      name: "Tom Hardy",
-      email: "tom.hardy@gmail.com",
-      role: "Admin",
-      creationdate: "13 Feb 2020",
-    },
-    {
-      key: 2,
-      name: "Emma Stone",
-      email: "emma.stone@example.com",
-      role: "Admin",
-      creationdate: "10 Jan 2021",
-    },
-    {
-      key: 3,
-      name: "Robert Downey",
-      email: "rdj@avengers.com",
-      role: "Admin",
-      creationdate: "25 Dec 2019",
-    },
-  ];
-
   const [searchText, setSearchText] = useState("");
-  const [admins, setAdmins] = useState(initialData);
-  const [filteredData, setFilteredData] = useState(initialData);
-
+  const [filteredData, setFilteredData] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
-  const addFormRef = useRef(null);
-  const editFormRef = useRef(null);
+  // Get all Admin Data
+  const {
+    data: adminListData,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetAllAdminQuery();
+
+  // Create a new Admin API
+  const [createAdmin, { isLoading: isCreating }] = useCreateAdminMutation();
+
+  // Delete Admin API
+  const [deleteAdmin, { isLoading: isDeleting }] = useDeleteAdminMutation();
+
+  // Transform API data to match table format
+  const transformedData =
+    adminListData?.data?.map((admin, index) => ({
+      key: admin._id,
+      _id: admin._id,
+      name: admin.fullName,
+      email: admin.email,
+      role: admin.role,
+      creationdate: new Date(admin.createdAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      image: admin.image,
+      phone: admin.phone,
+    })) || [];
+
+  // Update filtered data when API data changes
+  useEffect(() => {
+    setFilteredData(transformedData);
+  }, [adminListData]);
 
   // Search functionality
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
     setSearchText(value);
 
-    const filtered = admins.filter(
+    const filtered = transformedData.filter(
       (item) =>
         item.name.toLowerCase().includes(value) ||
         item.email.toLowerCase().includes(value)
@@ -71,115 +78,86 @@ const AdminList = () => {
     setFilteredData(filtered);
   };
 
-  // Open Add Admin Modal
+  // Add Admin Modal handlers
   const showAddModal = () => {
+    setSelectedAdmin(null);
     setIsAddModalOpen(true);
   };
 
-  // Close Add Admin Modal
   const handleCancelAdd = () => {
     setIsAddModalOpen(false);
-    addFormRef.current?.resetFields();
-    message.info("Admin addition cancelled.");
+    setSelectedAdmin(null);
   };
 
-  // const handleAddAdmin = (values) => {
-  //   // Ensure characters after ".com" are removed
-  //   const cleanEmail = values.email.replace(/\.com.*/i, ".com");
+  const handleAddAdmin = async (newAdmin) => {
+    try {
+      // Prepare data for API
+      const adminData = {
+        fullName: newAdmin.name,
+        email: newAdmin.email,
+        password: newAdmin.password,
+        role: "admin", // Always set to admin as per your requirement
+      };
 
-  //   const newAdmin = {
-  //     key: admins.length + 1,
-  //     ...values,
-  //     email: cleanEmail, // Apply cleaned email
-  //     creationdate: new Date().toLocaleDateString(),
-  //   };
+      const result = await createAdmin(adminData).unwrap();
 
-  //   const updatedAdmins = [...admins, newAdmin];
-  //   setAdmins(updatedAdmins);
-  //   setFilteredData(updatedAdmins);
-  //   setIsAddModalOpen(false);
-  //   addFormRef.current?.resetFields();
-
-  //   message.success("Admin added successfully!");
-  // };
-
-  const handleAddAdmin = (values) => {
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
-
-    const newAdmin = {
-      key: admins.length + 1,
-      name: values.name,
-      email: cleanEmail,
-      role: "Admin", // Ensure role is always Admin
-      creationdate: new Date().toLocaleDateString(),
-    };
-
-    const updatedAdmins = [...admins, newAdmin];
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsAddModalOpen(false);
-    addFormRef.current?.resetFields();
-
-    message.success("Admin added successfully!");
+      if (result.success) {
+        message.success("Admin added successfully!");
+        setIsAddModalOpen(false);
+        setSelectedAdmin(null);
+        refetch(); // Refresh the admin list
+      }
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      message.error(error?.data?.message || "Failed to add admin");
+    }
   };
 
-  // Open Edit Admin Modal
-  const showEditModal = (record) => {
-    setSelectedAdmin(record);
-    setIsEditModalOpen(true);
-    setTimeout(() => {
-      editFormRef.current?.setFieldsValue(record);
-    }, 0);
-  };
-
-  // Close Edit Admin Modal
-  const handleCancelEdit = () => {
-    setIsEditModalOpen(false);
-    editFormRef.current?.resetFields();
-    message.info("Admin edit cancelled.");
-  };
-
-  const handleEditAdmin = (values) => {
-    // Ensure characters after ".com" are removed
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
-
-    const updatedAdmins = admins.map((admin) =>
-      admin.key === selectedAdmin.key
-        ? { ...admin, ...values, email: cleanEmail }
-        : admin
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsEditModalOpen(false);
-
-    message.success("Admin updated successfully!");
-  };
-
-  // Open Delete Admin Modal
+  // Delete Admin Modal handlers
   const showDeleteModal = (record) => {
     setSelectedAdmin(record);
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm Delete Admin
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedAdmin) return;
-    const updatedAdmins = admins.filter(
-      (admin) => admin.key !== selectedAdmin.key
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsDeleteModalOpen(false);
 
-    message.success("Admin deleted successfully!");
-  };
+    try {
+      const result = await deleteAdmin(selectedAdmin._id).unwrap();
 
-  const handleMenuClick = (e) => {
-    const selected = items.find((item) => item.key === e.key);
-    if (selected) {
-      setSelectedRecipient(selected.label);
+      if (result.success) {
+        message.success("Admin deleted successfully!");
+        setIsDeleteModalOpen(false);
+        setSelectedAdmin(null);
+        refetch(); // Refresh the admin list
+      }
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      message.error(error?.data?.message || "Failed to delete admin");
     }
   };
+
+  // Handle loading and error states
+  if (isLoading) {
+    return (
+      <div className="w-[60%] bg-white rounded-lg shadow-lg p-5 flex justify-center items-center min-h-[400px]">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="w-[60%] bg-white rounded-lg shadow-lg p-5">
+        <div className="text-center text-red-500 py-8">
+          <p>Error loading admin data</p>
+          <ButtonEDU actionType="add" onClick={refetch}>
+            Retry
+          </ButtonEDU>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-[60%] bg-white rounded-lg shadow-lg p-5">
@@ -188,193 +166,17 @@ const AdminList = () => {
         handleSearch={handleSearch}
         onAdd={showAddModal}
       />
-      <TableBody
-        filteredData={filteredData}
-        onEdit={showEditModal}
-        onDelete={showDeleteModal}
-      />
+      <TableBody filteredData={filteredData} onDelete={showDeleteModal} />
 
       {/* Add Admin Modal */}
-      <Modal
-        title="Add Admin"
-        open={isAddModalOpen}
+      <AdminModal
+        isOpen={isAddModalOpen}
         onCancel={handleCancelAdd}
-        footer={null}
-        className="z-50"
-      >
-        <ConfigProvider
-          theme={{
-            components: {
-              Form: {
-                labelFontSize: 16,
-              },
-              Input: {
-                hoverBorderColor: "#fd7d00",
-                activeBorderColor: "#fd7d00",
-              },
-            },
-          }}
-        >
-          <Form layout="vertical" ref={addFormRef} onFinish={handleAddAdmin}>
-            <Form.Item
-              label="Name"
-              name="name"
-              rules={[{ required: true, message: "Please enter Name" }]}
-            >
-              <Input placeholder="Name" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Please enter Email" },
-                {
-                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                  message: "Please enter a valid email address",
-                },
-                {
-                  validator: (_, value) => {
-                    // Ensure no characters after .com
-                    if (value && value.includes(".com")) {
-                      const emailAfterDot = value.split(".com")[1];
-                      if (emailAfterDot && emailAfterDot.length > 0) {
-                        return Promise.reject(
-                          "No characters should be after .com"
-                        );
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input placeholder="Email" className="h-10" />
-            </Form.Item>
-            {/* <Form.Item
-              label="Role"
-              name="role"
-              value="Admin"
-              rules={[{ required: false, message: "Please enter Role" }]}
-            >
-              <Input placeholder="Role" className="h-10" disabled />
-            </Form.Item> */}
-            <Form.Item
-              label="Role"
-              name="role"
-              initialValue="Admin" // Automatically sets the value
-            >
-              <Input placeholder="Role" className="h-10" disabled />
-            </Form.Item>
-            <Form.Item label="Password" name="password">
-              <Input.Password placeholder="Set a Password" className="h-10" />
-            </Form.Item>
-            <div className="flex justify-end gap-4 mt-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancelAdd}>
-                Cancel
-              </ButtonEDU>
-              <ButtonEDU
-                actionType="save"
-                onClick={() => addFormRef.current?.submit()}
-              >
-                Save
-              </ButtonEDU>
-            </div>
-          </Form>
-        </ConfigProvider>
-      </Modal>
-
-      {/* Edit Admin Modal */}
-      <Modal
-        title="Edit Admin"
-        open={isEditModalOpen}
-        onCancel={handleCancelEdit}
-        footer={null}
-        className="z-50"
-      >
-        <ConfigProvider
-          theme={{
-            components: {
-              Form: {
-                labelFontSize: 16,
-              },
-              Input: {
-                hoverBorderColor: "#fd7d00",
-                activeBorderColor: "#fd7d00",
-              },
-              Select: {
-                hoverBorderColor: "#fd7d00",
-                activeBorderColor: "#fd7d00",
-              },
-            },
-          }}
-        >
-          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>
-            <Form.Item
-              label="Name"
-              name="name"
-              rules={[{ required: true, message: "Please enter Name" }]}
-            >
-              <Input placeholder="Name" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Please enter Email" },
-                {
-                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                  message: "Please enter a valid email address",
-                },
-                {
-                  validator: (_, value) => {
-                    // Ensure no characters after .com
-                    if (value && value.includes(".com")) {
-                      const emailAfterDot = value.split(".com")[1];
-                      if (emailAfterDot && emailAfterDot.length > 0) {
-                        return Promise.reject(
-                          "No characters should be after .com"
-                        );
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input placeholder="Email" className="h-10" />
-            </Form.Item>
-            {/* <Form.Item
-              label="Role"
-              name="role"
-              rules={[{ required: true, message: "Please enter Role" }]}
-            >
-              <Input placeholder="Role" className="h-10" />
-            </Form.Item> */}
-            <Form.Item
-              label="Role"
-              name="role"
-              rules={[{ required: true, message: "Please select a role" }]}
-            >
-              <Select placeholder="Select Role" className="h-10 ">
-                <Select.Option value="Admin">Admin</Select.Option>
-                <Select.Option value="Moderator">Moderator</Select.Option>
-                <Select.Option value="Super Admin">Super Admin</Select.Option>
-              </Select>
-            </Form.Item>
-            <div className="flex justify-end gap-4 mt-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancelEdit}>
-                Cancel
-              </ButtonEDU>
-              <ButtonEDU
-                actionType="save"
-                onClick={() => editFormRef.current?.submit()}
-              >
-                Save
-              </ButtonEDU>
-            </div>
-          </Form>
-        </ConfigProvider>
-      </Modal>
+        onSubmit={handleAddAdmin}
+        selectedAdmin={selectedAdmin}
+        isEditMode={false}
+        isLoading={isCreating}
+      />
 
       {/* Delete Admin Modal */}
       <Modal
@@ -389,11 +191,13 @@ const AdminList = () => {
           name={selectedAdmin?.name}
           onConfirm={handleConfirmDelete}
           onCancel={() => setIsDeleteModalOpen(false)}
+          isLoading={isDeleting}
         />
       </Modal>
     </div>
   );
 };
+
 const TableHead = ({ searchText, handleSearch, onAdd }) => {
   return (
     <div className="flex justify-between items-center mb-4">
@@ -423,17 +227,22 @@ const TableHead = ({ searchText, handleSearch, onAdd }) => {
     </div>
   );
 };
-const TableBody = ({ filteredData, onEdit, onDelete }) => (
+
+const TableBody = ({ filteredData, onDelete }) => (
   <Table
     rowKey={(record) => record.key}
-    columns={columns(onEdit, onDelete)}
+    columns={columns(onDelete)}
     dataSource={filteredData}
-    pagination={false}
+    pagination={{
+      pageSize: 10,
+      showSizeChanger: false,
+      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+    }}
     className="mt-5"
   />
 );
 
-const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
+const DeleteAdmin = ({ name, onConfirm, onCancel, isLoading }) => (
   <Flex
     vertical
     justify="space-between"
@@ -445,35 +254,55 @@ const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
       <span className="font-bold ml-1">{name}</span>?
     </Flex>
     <div className="flex items-center justify-center gap-4">
-      <ButtonEDU actionType="cancel" onClick={onCancel}>
-        Cancel{" "}
+      <ButtonEDU actionType="cancel" onClick={onCancel} disabled={isLoading}>
+        Cancel
       </ButtonEDU>
-      <ButtonEDU actionType="delete" onClick={onConfirm}>
+      <ButtonEDU actionType="delete" onClick={onConfirm} loading={isLoading}>
         Delete
       </ButtonEDU>
     </div>
   </Flex>
 );
 
-const columns = (onEdit, onDelete) => [
-  { title: "Name", dataIndex: "name", key: "name" },
-  { title: "Email", dataIndex: "email", key: "email" },
-  { title: "Role", dataIndex: "role", key: "role" },
+const columns = (onDelete) => [
   {
+    title: "Name",
+    dataIndex: "name",
+    key: "name",
+    sorter: (a, b) => a.name.localeCompare(b.name),
+  },
+  {
+    title: "Email",
+    dataIndex: "email",
+    key: "email",
+    sorter: (a, b) => a.email.localeCompare(b.email),
+  },
+  {
+    title: "Role",
+    dataIndex: "role",
+    key: "role",
+    render: (role) => (
+      <span className="capitalize px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+        {role}
+      </span>
+    ),
+  },
+  {
+    title: "Creation Date",
+    dataIndex: "creationdate",
+    key: "creationdate",
+    sorter: (a, b) => new Date(a.creationdate) - new Date(b.creationdate),
+  },
+  {
+    title: "Action",
     key: "action",
     render: (_, record) => (
       <Popover
         content={
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onEdit(record)}
-              className="bg-sky-400/50 hover:bg-sky-400 p-2 rounded-lg"
-            >
-              <FiEdit2 size={15} />
-            </button>
-            <button
               onClick={() => onDelete(record)}
-              className="bg-red-400/50 hover:bg-red-400 p-2 rounded-lg"
+              className="bg-red-400/50 hover:bg-red-400 p-2 rounded-lg transition-colors"
             >
               <RiDeleteBin6Line size={15} />
             </button>
@@ -481,9 +310,10 @@ const columns = (onEdit, onDelete) => [
         }
         trigger="hover"
       >
-        <MoreOutlined />
+        <MoreOutlined className="cursor-pointer" />
       </Popover>
     ),
   },
 ];
+
 export default AdminList;
