@@ -15,9 +15,10 @@ const bannerSlice = api.injectEndpoints({
 
     updateBanner: builder.mutation({
       query: ({ id, data }) => {
+        console.log("API mutation called with:", { id, data }); // Debug log
         return {
-          url: `/banner/${id}`,
-          method: "PATCH", // or PATCH depending on your API
+          url: `/banner/${id}`, // Make sure this matches your API endpoint
+          method: "PATCH",
           body: data,
         };
       },

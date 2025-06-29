@@ -20,20 +20,51 @@ const SliderModal = ({
   // Reset form when modal opens/closes or editing data changes
   useEffect(() => {
     if (isVisible) {
+      console.log("Modal opened with editingData:", editingData);
+
       if (isEditing && editingData) {
+        // Debug: Log the editingData structure
+        console.log("Setting form values:", {
+          name: editingData.name,
+          type: editingData.type,
+          image: editingData.sliderimg,
+        });
+
         // Populate form with editing data
         form.setFieldsValue({
           name: editingData.name || "",
           type: editingData.type || undefined,
         });
+
+        // Set the image preview
         setUploadedImage(editingData.sliderimg || null);
         setImageFile(null);
+
+        // Force form to update its display
+        setTimeout(() => {
+          form.validateFields();
+        }, 100);
       } else {
         // Reset form for new entry
         form.resetFields();
         setUploadedImage(null);
         setImageFile(null);
       }
+    }
+  }, [isVisible, isEditing, editingData, form]);
+
+  // Additional useEffect to handle form updates
+  useEffect(() => {
+    if (isVisible && isEditing && editingData) {
+      // Force update form fields after modal is fully rendered
+      const timer = setTimeout(() => {
+        form.setFieldsValue({
+          name: editingData.name || "",
+          type: editingData.type || undefined,
+        });
+      }, 50);
+
+      return () => clearTimeout(timer);
     }
   }, [isVisible, isEditing, editingData, form]);
 
@@ -45,6 +76,8 @@ const SliderModal = ({
   };
 
   const handleFormSubmit = (values) => {
+    console.log("Form submitted with values:", values);
+
     // Validation
     if (!uploadedImage && !isEditing) {
       return message.error("Please upload an image!");
@@ -66,6 +99,7 @@ const SliderModal = ({
       imageFile: imageFile, // Include the actual file for upload
     };
 
+    console.log("Submitting form data:", formData);
     onSubmit(formData);
   };
 
@@ -139,6 +173,14 @@ const SliderModal = ({
         onFinish={handleFormSubmit}
         className="mt-4"
         preserve={false}
+        initialValues={
+          isEditing && editingData
+            ? {
+                name: editingData.name || "",
+                type: editingData.type || undefined,
+              }
+            : {}
+        }
       >
         {/* Name Input */}
         <Form.Item
