@@ -52,24 +52,24 @@ function Profile() {
     setUploadedImage(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-72">
-        Loading profile...
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center min-h-72">
+  //       Loading profile...
+  //     </div>
+  //   );
+  // }
 
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-72">
-        <p>Error loading profile</p>
-        <Button onClick={() => refetch()} className="mt-2">
-          Retry
-        </Button>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="flex flex-col justify-center items-center min-h-72">
+  //       <p>Error loading profile</p>
+  //       <Button onClick={() => refetch()} className="mt-2">
+  //         Retry
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="bg-quilocoP w-full min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg overflow-hidden">
