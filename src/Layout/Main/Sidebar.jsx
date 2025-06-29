@@ -176,15 +176,15 @@ const Sidebar = ({ isCollapsed }) => {
             </Link>
           ),
         },
-        {
-          key: "/faq",
-          icon: <FaQuoteRight size={24} />,
-          label: (
-            <Link to="/faq" className="text-white hover:text-white">
-              FAQ
-            </Link>
-          ),
-        },
+        // {
+        //   key: "/faq",
+        //   icon: <FaQuoteRight size={24} />,
+        //   label: (
+        //     <Link to="/faq" className="text-white hover:text-white">
+        //       FAQ
+        //     </Link>
+        //   ),
+        // },
         {
           key: "/contact",
           icon: <RiContactsBook3Line size={24} />,
@@ -212,27 +212,6 @@ const Sidebar = ({ isCollapsed }) => {
             </Link>
           ),
         },
-        // {
-        //   key: "/coach-slider",
-        //   icon: <TfiLayoutSliderAlt size={24} />,
-        //   label: (
-        //     <Link to="/coach-slider" className="text-white hover:text-white">
-        //       Coach Slider
-        //     </Link>
-        //   ),
-        // },
-        // {
-        //   key: "/corporate-slider",
-        //   icon: <TfiLayoutSliderAlt size={24} />,
-        //   label: (
-        //     <Link
-        //       to="/corporate-slider"
-        //       className="text-white hover:text-white"
-        //     >
-        //       Corporate Slider
-        //     </Link>
-        //   ),
-        // },
       ],
     },
 

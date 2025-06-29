@@ -156,14 +156,14 @@ const router = createBrowserRouter([
         ),
       },
 
-      {
-        path: "/faq",
-        element: (
-          <ProtectedRoute>
-            <FaqCollapse />
-          </ProtectedRoute>
-        ),
-      },
+      // {
+      //   path: "/faq",
+      //   element: (
+      //     <ProtectedRoute>
+      //       <FaqCollapse />
+      //     </ProtectedRoute>
+      //   ),
+      // },
       {
         path: "/contact",
         element: (
