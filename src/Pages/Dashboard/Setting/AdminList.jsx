@@ -9,6 +9,7 @@ import {
   ConfigProvider,
   message,
   Spin,
+  Tooltip,
 } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 
@@ -20,6 +21,8 @@ import {
   useGetAllAdminQuery,
   useDeleteAdminMutation,
 } from "../../../redux/apiSlices/adminSlice";
+
+const MAXIMUM_ADMIN_LIMIT = 5;
 
 const AdminList = () => {
   const [searchText, setSearchText] = useState("");
@@ -59,6 +62,9 @@ const AdminList = () => {
       phone: admin.phone,
     })) || [];
 
+  // Check if maximum admin limit is reached
+  const isMaxLimitReached = transformedData.length >= MAXIMUM_ADMIN_LIMIT;
+
   // Update filtered data when API data changes
   useEffect(() => {
     setFilteredData(transformedData);
@@ -80,6 +86,10 @@ const AdminList = () => {
 
   // Add Admin Modal handlers
   const showAddModal = () => {
+    if (isMaxLimitReached) {
+      message.warning(`Maximum ${MAXIMUM_ADMIN_LIMIT} admins allowed!`);
+      return;
+    }
     setSelectedAdmin(null);
     setIsAddModalOpen(true);
   };
@@ -91,6 +101,12 @@ const AdminList = () => {
 
   const handleAddAdmin = async (newAdmin) => {
     try {
+      // Double check limit before creating
+      if (transformedData.length >= MAXIMUM_ADMIN_LIMIT) {
+        message.warning(`Maximum ${MAXIMUM_ADMIN_LIMIT} admins allowed!`);
+        return;
+      }
+
       // Prepare data for API
       const adminData = {
         fullName: newAdmin.name,
@@ -165,6 +181,9 @@ const AdminList = () => {
         searchText={searchText}
         handleSearch={handleSearch}
         onAdd={showAddModal}
+        isMaxLimitReached={isMaxLimitReached}
+        currentCount={transformedData.length}
+        maxLimit={MAXIMUM_ADMIN_LIMIT}
       />
       <TableBody filteredData={filteredData} onDelete={showDeleteModal} />
 
@@ -198,32 +217,70 @@ const AdminList = () => {
   );
 };
 
-const TableHead = ({ searchText, handleSearch, onAdd }) => {
+const TableHead = ({
+  searchText,
+  handleSearch,
+  onAdd,
+  isMaxLimitReached,
+  currentCount,
+  maxLimit,
+}) => {
+  const addButton = (
+    <ButtonEDU
+      actionType="add"
+      onClick={onAdd}
+      disabled={isMaxLimitReached}
+      className={isMaxLimitReached ? "opacity-50 cursor-not-allowed" : ""}
+    >
+      <div className="flex items-center justify-center gap-2">
+        <FaPlus size={15} /> Add new
+      </div>
+    </ButtonEDU>
+  );
+
   return (
     <div className="flex justify-between items-center mb-4">
-      <ConfigProvider
-        theme={{
-          components: {
-            Input: {
-              hoverBorderColor: "#fd7d00",
-              activeBorderColor: "#fd7d00",
+      <div className="flex flex-col gap-2">
+        <ConfigProvider
+          theme={{
+            components: {
+              Input: {
+                hoverBorderColor: "#fd7d00",
+                activeBorderColor: "#fd7d00",
+              },
             },
-          },
-        }}
-      >
-        <Input
-          placeholder="Search admins..."
-          value={searchText}
-          onChange={handleSearch}
-          className="w-1/3 h-10"
-          allowClear
-        />
-      </ConfigProvider>
-      <ButtonEDU actionType="add" onClick={onAdd}>
-        <div className="flex items-center justify-center gap-2">
-          <FaPlus size={15} /> Add new
+          }}
+        >
+          <Input
+            placeholder="Search admins..."
+            value={searchText}
+            onChange={handleSearch}
+            className="w-80 h-10"
+            allowClear
+          />
+        </ConfigProvider>
+        <div className="text-sm text-gray-600">
+          Total Admins:{" "}
+          <span className="font-semibold">
+            {currentCount}/{maxLimit}
+          </span>
         </div>
-      </ButtonEDU>
+      </div>
+
+      <div className="flex flex-col items-end gap-2">
+        {isMaxLimitReached ? (
+          <Tooltip
+            title={`Maximum ${maxLimit} admins allowed. Delete an admin to add a new one.`}
+          >
+            {addButton}
+          </Tooltip>
+        ) : (
+          addButton
+        )}
+        {isMaxLimitReached && (
+          <div className="text-xs text-red-500">Maximum limit reached</div>
+        )}
+      </div>
     </div>
   );
 };
@@ -233,12 +290,8 @@ const TableBody = ({ filteredData, onDelete }) => (
     rowKey={(record) => record.key}
     columns={columns(onDelete)}
     dataSource={filteredData}
-    pagination={{
-      pageSize: 10,
-      showSizeChanger: false,
-      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
-    }}
     className="mt-5"
+    pagination={false}
   />
 );
 
@@ -297,21 +350,14 @@ const columns = (onDelete) => [
     title: "Action",
     key: "action",
     render: (_, record) => (
-      <Popover
-        content={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onDelete(record)}
-              className="bg-red-400/50 hover:bg-red-400 p-2 rounded-lg transition-colors"
-            >
-              <RiDeleteBin6Line size={15} />
-            </button>
-          </div>
-        }
-        trigger="hover"
-      >
-        <MoreOutlined className="cursor-pointer" />
-      </Popover>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onDelete(record)}
+          className="bg-gray-400/50 hover:bg-abbes  p-2 rounded-lg transition-colors"
+        >
+          <RiDeleteBin6Line size={15} />
+        </button>
+      </div>
     ),
   },
 ];
