@@ -108,7 +108,7 @@ function TraineeAndCoaches() {
             onClick={() => handleRadioClick("Customer")}
           >
             <span className="inline-block w-4 h-4 mr-2 bg-abbes rounded"></span>
-            Trainee
+            Client
           </label>
         </div>
         <div className="flex items-center gap-2 rounded-full">
@@ -136,7 +136,7 @@ function TraineeAndCoaches() {
   return (
     <>
       <div className="flex items-center justify-between px-6 mt-5 relative">
-        <h1 className="text-2xl text-abbes font-semibold">Trainee & Coaches</h1>
+        <h1 className="text-2xl text-abbes font-semibold">Client & Coaches</h1>
         <CustomLegend />
         <PickDate setSelectedYear={setSelectedYear} />
       </div>
@@ -184,25 +184,34 @@ function TraineeAndCoaches() {
 
 export default TraineeAndCoaches;
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="relative flex items-center ml-4">
-        {/* Arrow (pointing left) */}
-        <div className="absolute w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-abbes -left-1"></div>
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[120px]">
+        {/* Month header */}
+        <div className="text-gray-600 font-medium text-sm mb-2 text-center border-b border-gray-100 pb-1">
+          {label}
+        </div>
 
-        {/* Tooltip Content */}
-        <div className="bg-abbes px-2 py-1 border-none text-sm text-white rounded shadow-md">
-          {payload.map((pld, index) => (
+        {/* Data entries */}
+        <div className="space-y-1">
+          {payload.map((entry, index) => (
             <div
               key={index}
-              className={`${
-                pld.dataKey === "Trainee"
-                  ? "border rounded-md px-1  text-[#fd7d00]"
-                  : "border rounded-md px-1  text-[#ffd6af]"
-              } text-[14px] bg-white flex flex-col gap-1`}
+              className="flex items-center justify-between gap-3"
             >
-              {pld.value}
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-gray-700 text-sm">
+                  {entry.dataKey === "Trainee" ? "Client" : "Players"}
+                </span>
+              </div>
+              <span className="font-semibold text-gray-900 text-sm">
+                {entry.value}
+              </span>
             </div>
           ))}
         </div>

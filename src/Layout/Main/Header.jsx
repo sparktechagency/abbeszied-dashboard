@@ -1,28 +1,42 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaRegBell } from "react-icons/fa6";
-import { Badge, Avatar, ConfigProvider, Flex, Dropdown } from "antd";
+import { RiSettings5Line, RiShutDownLine } from "react-icons/ri";
+import { Badge, Avatar, ConfigProvider, Flex, Popover } from "antd";
 import { useUser } from "../../provider/User";
 import { CgMenu } from "react-icons/cg";
-import { US, GB, FR, DE } from "country-flag-icons/react/3x2";
-import { UserOutlined, DownOutlined } from "@ant-design/icons";
+import { useProfileQuery } from "../../redux/apiSlices/userSlice";
+import { getImageUrl } from "../../utils/baseUrl";
 
 const Header = ({ toggleSidebar }) => {
-  const { user } = useUser();
-  const src = user?.image?.startsWith("https")
-    ? user?.image
-    : `https://your-image-source/${user?.image}`;
-  const [selectedCountry, setSelectedCountry] = useState("USA");
+  const { data: profileData } = useProfileQuery();
+  console.log("User", profileData?.data);
+  const user = profileData?.data;
 
-  const handleCountryChange = (value) => {
-    setSelectedCountry(value);
-    console.log("Selected Language:", value);
-  };
-
-  const userMenuItems = [
-    { label: <Link to="/profile">Profile</Link>, key: "profile" },
-    { label: <Link to="/auth/login">Log Out</Link>, key: "logout" },
-  ];
+  // Move userMenuContent inside component to access user data
+  const userMenuContent = (
+    <div>
+      <div className="mr-4 flex gap-2.5 font-semibold hover:text-black cursor-pointer">
+        {user?.fullName}
+      </div>
+      <p>{user?.role}</p>
+      <Link
+        to="/admin-list"
+        className="flex items-center gap-2 py-1 mt-1 text-black hover:text-smart"
+      >
+        <RiSettings5Line className="text-gray-400 animate-spin" />
+        <span>Setting</span>
+      </Link>
+      <Link
+        to="/auth/login"
+        className="flex items-center gap-2 py-1 text-black hover:text-smart"
+        onClick={() => localStorage.removeItem("accessToken")}
+      >
+        <RiShutDownLine className="text-red-500 animate-pulse" />
+        <span>Log Out</span>
+      </Link>
+    </div>
+  );
 
   return (
     <ConfigProvider
@@ -41,7 +55,7 @@ const Header = ({ toggleSidebar }) => {
       <Flex
         align="center"
         justify="between"
-        className="w-100% min-h-[85px] px-4 py-2 shadow-sm overflow-auto text-slate-700 bg-white"
+        className="w-full min-h-[85px] px-4 py-2 shadow-sm overflow-auto text-slate-700 bg-white"
       >
         <div>
           <CgMenu
@@ -55,26 +69,25 @@ const Header = ({ toggleSidebar }) => {
           {/* Notification Badge */}
           <div className="w-8 h-8 bg-[#faede3] flex items-center justify-center p-6 rounded-md relative">
             <Link to="/notification" className="flex">
-              <FaRegBell color="#fd7d00" size={30} className="relative " />
+              <FaRegBell color="#fd7d00" size={30} className="relative" />
               <Badge dot className="absolute top-[30%] left-[55%]" />
             </Link>
           </div>
+
           {/* User Profile */}
-          <Link to="/admin-list" className="flex items-center gap-3">
-            <Avatar shape="square" size={60} className="rounded" src={src} />
-          </Link>
-          {/* Dropdown Menu */}
-          <Flex vertical align="start">
-            <Dropdown menu={{ items: userMenuItems }} trigger={["click"]}>
-              <a onClick={(e) => e.preventDefault()}>
-                <div className="mr-4 flex gap-2.5 font-semibold hover:text-black">
-                  {`${user?.firstName} ${user?.lastName}`}
-                  <DownOutlined />
-                </div>
-              </a>
-            </Dropdown>
-            <p>Super Admin</p>
-          </Flex>
+          <Popover
+            content={userMenuContent}
+            trigger="click"
+            arrow={false}
+            placement="bottomLeft"
+          >
+            <Avatar
+              shape="circle"
+              size={44}
+              className="rounded-full cursor-pointer ring-2 ring-offset-2 ring-abbes"
+              src={`${getImageUrl}${user?.image}`}
+            />
+          </Popover>
         </Flex>
       </Flex>
     </ConfigProvider>

@@ -49,7 +49,7 @@ const Home = () => {
   const getStatsData = () => {
     const defaultStats = [
       {
-        label: "Total Trainee",
+        label: "Total Client",
         value: "0",
         percent: +2.6,
         color: "#00a76f",
