@@ -125,7 +125,7 @@ function ProductList() {
           width={80}
           height={80}
           alt={record.productName}
-          style={{ objectFit: "cover", borderRadius: "4px" }}
+          className="max-w-20 max-h-12 object-cover rounded-md"
           onError={(e) => {
             e.target.src = shoe; // Fallback image
           }}

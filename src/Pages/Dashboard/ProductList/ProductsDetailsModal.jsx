@@ -7,7 +7,6 @@ import {
   FaTag,
   FaUser,
 } from "react-icons/fa";
-import { Button, ConfigProvider, message } from "antd";
 import shoe from "../../../assets/shoe.png";
 import sneakers1 from "../../../assets/sneakers1.png";
 import sneakers2 from "../../../assets/sneakers2.png";
@@ -74,7 +73,7 @@ const ProductsDetailsModal = ({ isModalOpen, handleCancel, providerData }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${isModalOpen ? "block" : "hidden"} 
+      className={`fixed inset-0 z-50 ${isModalOpen ? "block" : "hidden"}
       flex items-center justify-center bg-black bg-opacity-50`}
     >
       <div className="bg-white rounded-lg shadow-xl w-[800px] max-w-[95%] max-h-[95%] overflow-auto p-6">
@@ -104,7 +103,7 @@ const ProductsDetailsModal = ({ isModalOpen, handleCancel, providerData }) => {
 
             {/* Thumbnails */}
             <div className="flex justify-center space-x-2">
-              {allImages.map((image, index) => (
+              {productImages.map((image, index) => (
                 <img
                   key={index}
                   src={image}
