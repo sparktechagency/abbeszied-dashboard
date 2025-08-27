@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://10.0.60.126:5000";
+const SOCKET_URL = "http://10.10.7.62:5000";
 
 export const useSocket = (userId, chatRoomId) => {
   const [socket, setSocket] = useState(null);

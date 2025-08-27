@@ -127,14 +127,6 @@ const router = createBrowserRouter([
             <SupportChat />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: "/chat/:chatRoomId",
-        element: (
-          <ProtectedRoute>
-            <SupportChat />
-          </ProtectedRoute>
-        ),
         children: [
           {
             path: ":chatRoomId",

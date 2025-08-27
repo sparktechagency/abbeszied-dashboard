@@ -3,7 +3,7 @@ import { Avatar, Badge } from "antd";
 import { useLocation } from "react-router-dom";
 function ChatHeader() {
   const location = useLocation();
-  const user = location.state?.user || {}; // Get user data from state
+  const user = location.state?.user || {};
   console.log("usersss", user.name);
   return (
     <div className="flex items-center gap-3 h-full">
