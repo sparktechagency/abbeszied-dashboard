@@ -2,15 +2,29 @@ import { api } from "../api/baseApi";
 
 const supportChatSlice = api.injectEndpoints({
   endpoints: (builder) => ({
-    // Get messages for a specific chat room
+    // Get messages for a specific chat room with pagination
     getMessage: builder.query({
-      query: (chatRoomId) => ({
-        url: `/messages/${chatRoomId}`,
-        method: "GET",
-      }),
-      providesTags: (result, error, chatRoomId) => [
-        { type: "CHAT", id: chatRoomId },
-      ],
+      query: (params) => {
+        // Handle both string (backward compatibility) and object parameters
+        console.log("getMessage query params:", params);
+
+        const chatRoomId =
+          typeof params === "string" ? params : params.chatRoomId;
+        const page = typeof params === "string" ? 1 : params.page || 1;
+        const limit = typeof params === "string" ? 10 : params.limit || 10;
+
+        console.log("Extracted params:", { chatRoomId, page, limit });
+
+        return {
+          url: `/messages/${chatRoomId}?page=${page}&limit=${limit}`,
+          method: "GET",
+        };
+      },
+      providesTags: (result, error, params) => {
+        const chatRoomId =
+          typeof params === "string" ? params : params.chatRoomId;
+        return [{ type: "CHAT", id: chatRoomId }];
+      },
     }),
 
     // Send text or file message

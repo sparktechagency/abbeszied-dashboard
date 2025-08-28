@@ -51,13 +51,14 @@ function SidebarContent() {
               return null;
             }
 
-            const senderId = chat.lastMessage?.sender;
-
             // Get the other participant (excluding current user)
             const participant =
               chat.participants?.find((p) => p._id !== currentUserId) ??
               chat.participants?.[0] ??
               {};
+
+            // Get participant ID
+            const participantId = participant._id || participant.id;
 
             // Ensure name is always a string with fallback
             const participantName =
@@ -74,7 +75,15 @@ function SidebarContent() {
             let lastMessageText = "No messages yet";
             if (chat.lastMessage) {
               if (typeof chat.lastMessage === "object") {
-                lastMessageText = chat.lastMessage?.text || "No messages yet";
+                // Check if it's an image message
+                if (
+                  chat.lastMessage.images &&
+                  chat.lastMessage.images.length > 0
+                ) {
+                  lastMessageText = "Sent an image";
+                } else {
+                  lastMessageText = chat.lastMessage?.text || "No messages yet";
+                }
               } else if (typeof chat.lastMessage === "string") {
                 lastMessageText = chat.lastMessage;
               }
@@ -105,7 +114,7 @@ function SidebarContent() {
               lastMessageTimestamp, // Add timestamp for sorting
               newMessageCount:
                 typeof chat.unreadCount === "number" ? chat.unreadCount : 0,
-              userId: senderId,
+              userId: participantId,
               chatRoomId: chatId,
               totalUnreadMessages:
                 typeof chat.totalUnreadMessages === "number"
@@ -157,6 +166,7 @@ function SidebarContent() {
 
     const handleNewMessage = (data) => {
       console.log("Socket new message data:", data);
+      console.log("Current user ID:", currentUserId);
 
       setChatList((prev) =>
         prev
@@ -165,18 +175,29 @@ function SidebarContent() {
               // Safely extract message text from the complex message structure
               let messageText = "File";
               let timestamp = new Date().toISOString();
+              let senderInfo = null;
 
               if (data.message) {
                 // Handle the message structure from your API
                 if (typeof data.message === "object") {
-                  // Extract text from the message object
-                  messageText = data.message.text || "File";
+                  // Check if it's an image message
+                  if (data.message.images && data.message.images.length > 0) {
+                    messageText = "Sent an image";
+                  } else {
+                    // Extract text from the message object
+                    messageText = data.message.text || "File";
+                  }
 
                   // Extract timestamp
                   if (data.message.createdAt) {
                     timestamp = data.message.createdAt;
                   } else if (data.message.timestamp) {
                     timestamp = data.message.timestamp;
+                  }
+
+                  // Extract sender information
+                  if (data.message.sender) {
+                    senderInfo = data.message.sender;
                   }
                 } else if (typeof data.message === "string") {
                   messageText = data.message;
@@ -188,13 +209,38 @@ function SidebarContent() {
                 messageText = String(messageText || "File");
               }
 
-              return {
+              // Update chat with new message info and sender details
+              const updatedChat = {
                 ...chat,
                 lastMessage: messageText,
                 lastMessageTime: timestamp,
                 lastMessageTimestamp: new Date(timestamp).getTime(),
                 newMessageCount: chat.newMessageCount + 1,
               };
+
+              // Update participant information if sender info is available
+              if (senderInfo && typeof senderInfo === "object") {
+                const senderId = senderInfo._id || senderInfo.id;
+
+                console.log("Sender info:", senderInfo);
+                console.log("Sender ID:", senderId);
+                console.log("Current user ID:", currentUserId);
+
+                // Only update if the sender is not the current user
+                if (senderId !== currentUserId) {
+                  updatedChat.name =
+                    senderInfo.fullName || senderInfo.name || chat.name;
+                  updatedChat.email = senderInfo.email || chat.email;
+                  updatedChat.avatar = senderInfo.image
+                    ? `${getImageUrl}${senderInfo.image}`
+                    : chat.avatar;
+                  updatedChat.userId = senderId;
+
+                  console.log("Updated chat with sender info:", updatedChat);
+                }
+              }
+
+              return updatedChat;
             }
             return chat;
           })
@@ -222,7 +268,7 @@ function SidebarContent() {
       socket.off("message-received", handleNewMessage);
       socket.off("user-status-change", handleUserStatusChange);
     };
-  }, [socket, currentUserId]);
+  }, [socket, currentUserId, getImageUrl]);
 
   // Filter & prioritize searched users
   const filteredUsers = chatList
