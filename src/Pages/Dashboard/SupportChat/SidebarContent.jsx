@@ -140,15 +140,86 @@ function SidebarContent() {
 
   // Socket event listeners for real-time updates
   useEffect(() => {
-    if (!socket) return;
+    console.log("=== SOCKET SETUP DEBUG ===");
+    console.log("Socket object:", socket);
+    console.log("Socket connected:", isConnected);
+    console.log("Current user ID:", currentUserId);
 
-    const handleChatListUpdate = (updatedChat) => {
+    if (!socket) {
+      console.log("No socket available, returning early");
+      return;
+    }
+
+    // Enhanced chat list update handler
+    const handleChatListUpdate = (updatedChatData) => {
+      console.log("=== FULL CHAT LIST UPDATE DEBUG ===");
+      console.log("Received chat update:", updatedChatData);
+
       setChatList((prev) => {
+        // Find the existing chat or prepare to add a new one
         const existingIndex = prev.findIndex(
-          (chat) => chat.id === updatedChat.id
+          (chat) => chat.chatRoomId === updatedChatData.chatId
         );
+
+        // Extract participant information
+        const participants = updatedChatData.chat?.participants || [];
+        const otherParticipant = participants.find(
+          (p) => p._id !== currentUserId
+        );
+
+        // Prepare updated chat object
+        const updatedChat = {
+          id: updatedChatData.chatId,
+          chatRoomId: updatedChatData.chatId,
+          name:
+            otherParticipant?.fullName ||
+            otherParticipant?.name ||
+            "Unknown Chat",
+          email: otherParticipant?.email || "",
+
+          // Improved avatar handling with fallback
+          avatar: otherParticipant?.image
+            ? `${getImageUrl}${otherParticipant.image}`
+            : prev.find((chat) => chat.chatRoomId === updatedChatData.chatId)
+                ?.avatar || null,
+
+          userId: otherParticipant?._id,
+          lastMessage: updatedChatData.lastMessage?.text || "No messages yet",
+          lastMessageTime: updatedChatData.updatedAt,
+          lastMessageTimestamp: new Date(updatedChatData.updatedAt).getTime(),
+
+          // Robust handling of message count
+          newMessageCount:
+            typeof updatedChatData.chat?.unreadCount === "number"
+              ? updatedChatData.chat.unreadCount
+              : 0,
+
+          isOnline: updatedChatData.chat?.status === "active",
+        };
+
+        console.log("=== AVATAR DEBUG ===");
+        console.log("Other Participant:", otherParticipant);
+        console.log(
+          "Existing Chat Avatar (from list):",
+          prev.find((chat) => chat.chatRoomId === updatedChatData.chatId)
+            ?.avatar
+        );
+        console.log("Updated Chat Avatar:", updatedChat.avatar);
+        console.log("=== END AVATAR DEBUG ===");
+
+        console.log("=== MESSAGE COUNT DEBUG ===");
+        console.log("Chat ID:", updatedChatData.chatId);
+        console.log("Unread Count:", updatedChatData.chat?.unreadCount);
+        console.log(
+          "Processed New Message Count:",
+          updatedChat.newMessageCount
+        );
+        console.log("=== END MESSAGE COUNT DEBUG ===");
+
+        console.log("Processed Updated Chat:", updatedChat);
+
+        // Update existing chat or add new chat
         if (existingIndex >= 0) {
-          // Update existing chat
           const updated = [...prev];
           updated[existingIndex] = {
             ...updated[existingIndex],
@@ -158,97 +229,110 @@ function SidebarContent() {
             (a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp
           );
         } else {
-          // Add new chat
-          return [updatedChat, ...prev];
+          // Add new chat to the top of the list
+          return [updatedChat, ...prev].sort(
+            (a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp
+          );
         }
       });
+
+      console.log("=== END CHAT LIST UPDATE DEBUG ===");
     };
 
+    // Enhanced new message handler
     const handleNewMessage = (data) => {
-      console.log("Socket new message data:", data);
-      console.log("Current user ID:", currentUserId);
+      console.log("=== FULL NEW MESSAGE DEBUG ===");
+      console.log("Received message data:", data);
 
-      setChatList((prev) =>
-        prev
-          .map((chat) => {
-            if (chat.chatRoomId === data.chatRoomId) {
-              // Safely extract message text from the complex message structure
-              let messageText = "File";
-              let timestamp = new Date().toISOString();
-              let senderInfo = null;
+      setChatList((prev) => {
+        // Find the existing chat
+        const existingIndex = prev.findIndex(
+          (chat) => chat.chatRoomId === data.chatRoomId
+        );
 
-              if (data.message) {
-                // Handle the message structure from your API
-                if (typeof data.message === "object") {
-                  // Check if it's an image message
-                  if (data.message.images && data.message.images.length > 0) {
-                    messageText = "Sent an image";
-                  } else {
-                    // Extract text from the message object
-                    messageText = data.message.text || "File";
-                  }
+        // If no existing chat found, return current list
+        if (existingIndex === -1) {
+          console.log(
+            "No matching chat found for chatRoomId:",
+            data.chatRoomId
+          );
+          return prev;
+        }
 
-                  // Extract timestamp
-                  if (data.message.createdAt) {
-                    timestamp = data.message.createdAt;
-                  } else if (data.message.timestamp) {
-                    timestamp = data.message.timestamp;
-                  }
+        // Clone the existing chat or create a default
+        const existingChat = prev[existingIndex] || {
+          chatRoomId: data.chatRoomId,
+          name: "Unknown Chat",
+          newMessageCount: 0,
+          avatar: null,
+          userId: null,
+        };
 
-                  // Extract sender information
-                  if (data.message.sender) {
-                    senderInfo = data.message.sender;
-                  }
-                } else if (typeof data.message === "string") {
-                  messageText = data.message;
-                }
-              }
+        // Determine sender information
+        const sender = data.lastMessage?.sender || {};
+        const senderName = sender.fullName || sender.name || "Unknown Sender";
 
-              // Ensure messageText is always a string
-              if (typeof messageText !== "string") {
-                messageText = String(messageText || "File");
-              }
+        // Prepare updated chat
+        const updatedChat = {
+          ...existingChat,
+          lastMessage: data.lastMessage?.text || "New message",
+          lastMessageTime: data.updatedAt || new Date().toISOString(),
+          lastMessageTimestamp: new Date(
+            data.updatedAt || new Date()
+          ).getTime(),
 
-              // Update chat with new message info and sender details
-              const updatedChat = {
-                ...chat,
-                lastMessage: messageText,
-                lastMessageTime: timestamp,
-                lastMessageTimestamp: new Date(timestamp).getTime(),
-                newMessageCount: chat.newMessageCount + 1,
-              };
+          // Increment new message count, with additional safety checks
+          newMessageCount:
+            typeof existingChat.newMessageCount === "number"
+              ? existingChat.newMessageCount + 1
+              : 1,
 
-              // Update participant information if sender info is available
-              if (senderInfo && typeof senderInfo === "object") {
-                const senderId = senderInfo._id || senderInfo.id;
+          // Preserve existing name if possible
+          name: existingChat.name || senderName,
 
-                console.log("Sender info:", senderInfo);
-                console.log("Sender ID:", senderId);
-                console.log("Current user ID:", currentUserId);
+          // Improved avatar handling
+          avatar: sender.image
+            ? `${getImageUrl}${sender.image}`
+            : existingChat.avatar,
 
-                // Only update if the sender is not the current user
-                if (senderId !== currentUserId) {
-                  updatedChat.name =
-                    senderInfo.fullName || senderInfo.name || chat.name;
-                  updatedChat.email = senderInfo.email || chat.email;
-                  updatedChat.avatar = senderInfo.image
-                    ? `${getImageUrl}${senderInfo.image}`
-                    : chat.avatar;
-                  updatedChat.userId = senderId;
+          // Update user ID if not set
+          userId: existingChat.userId || sender._id,
+        };
 
-                  console.log("Updated chat with sender info:", updatedChat);
-                }
-              }
+        // Clone the previous list and update the specific chat
+        const updatedChats = [...prev];
+        updatedChats[existingIndex] = updatedChat;
 
-              return updatedChat;
-            }
-            return chat;
-          })
-          .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp)
-      );
+        console.log("=== NEW MESSAGE AVATAR DEBUG ===");
+        console.log("Sender:", sender);
+        console.log("Existing Chat Avatar:", existingChat.avatar);
+        console.log("Sender Image:", sender.image);
+        console.log("Updated Chat Avatar:", updatedChat.avatar);
+        console.log("=== END NEW MESSAGE AVATAR DEBUG ===");
+
+        // Sort chats by most recent message
+        return updatedChats.sort(
+          (a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp
+        );
+      });
+
+      console.log("=== END NEW MESSAGE DEBUG ===");
     };
 
-    const handleUserStatusChange = (data) => {
+    // Listen for events
+    console.log("Registering socket event listeners...");
+
+    // Join user's personal room for notifications
+    socket.emit("join-user-room", currentUserId);
+
+    // Listen for chat list updates specific to this user
+    socket.on(`chatListUpdate::${currentUserId}`, handleChatListUpdate);
+
+    // Listen for new messages
+    socket.on("message-received", handleNewMessage);
+
+    // Listen for user status changes
+    socket.on("user-status-change", (data) => {
       setChatList((prev) =>
         prev.map((chat) =>
           chat.userId === data.userId
@@ -256,17 +340,21 @@ function SidebarContent() {
             : chat
         )
       );
-    };
+    });
 
-    // Listen for events
-    socket.on(`chatListUpdate::${currentUserId}`, handleChatListUpdate);
-    socket.on("message-received", handleNewMessage);
-    socket.on("user-status-change", handleUserStatusChange);
+    // Additional event listeners for broader message updates
+    socket.on("new-message", handleNewMessage);
+    socket.on("message", handleNewMessage);
 
+    console.log("Socket event listeners registered successfully");
+
+    // Cleanup function
     return () => {
       socket.off(`chatListUpdate::${currentUserId}`, handleChatListUpdate);
       socket.off("message-received", handleNewMessage);
-      socket.off("user-status-change", handleUserStatusChange);
+      socket.off("user-status-change");
+      socket.off("new-message", handleNewMessage);
+      socket.off("message", handleNewMessage);
     };
   }, [socket, currentUserId, getImageUrl]);
 
@@ -404,7 +492,7 @@ function SidebarContent() {
                       status={chat.isOnline ? "success" : "default"}
                       className="border-2 rounded-full"
                     >
-                      <Avatar src={chat.avatar || man}>
+                      <Avatar src={chat.avatar || man} alt={chat.name}>
                         {!chat.avatar && getAvatarInitials(chat.name)}
                       </Avatar>
                     </Badge>

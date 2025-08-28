@@ -61,7 +61,6 @@ const supportChatSlice = api.injectEndpoints({
                   hour: "2-digit",
                   minute: "2-digit",
                 }),
-                replyTo: message.replyTo || null,
                 status: "sending",
                 timestamp: new Date().toISOString(),
               };

@@ -28,7 +28,7 @@ function ChatRoom() {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState(null);
+
   const [isTyping, setIsTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null); // Add state for selected file
   const fileInputRef = useRef(null);
@@ -41,6 +41,10 @@ function ChatRoom() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showLoadMore, setShowLoadMore] = useState(false);
   const messagesContainerRef = useRef(null);
+  const scrollPositionRef = useRef(0);
+  const isLoadingMoreRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
 
   // RTK Query hooks
   const {
@@ -306,20 +310,6 @@ function ChatRoom() {
     [userId, generateSafeImageUrl]
   ); // Add userId and generateSafeImageUrl as dependencies to prevent infinite re-renders
 
-  // Handle message click for reply or selection
-  const handleMessageClick = useCallback((msg) => {
-    // Prevent error if msg is undefined or null
-    if (!msg || typeof msg !== "object") {
-      console.warn("Invalid message clicked:", msg);
-      return;
-    }
-
-    // Set selected message for potential reply or other interactions
-    setSelectedMessage((prevSelected) =>
-      prevSelected?.id === msg.id ? null : msg
-    );
-  }, []);
-
   // Error Boundary Component
   const MessageErrorBoundary = ({ children }) => {
     const [hasError, setHasError] = useState(false);
@@ -387,7 +377,6 @@ function ChatRoom() {
                 : String(msg.time || "Unknown time"),
             file: msg.file || null,
             status: msg.status || "sent",
-            replyTo: msg.replyTo || null,
             // Add sender image handling
             senderImage:
               msg.senderAvatar || msg.senderImage || msg.avatar || null,
@@ -409,12 +398,7 @@ function ChatRoom() {
               key={safeMsg.id}
               className={`flex items-start gap-2 ${
                 safeMsg.sender === "me" ? "justify-end" : "justify-start"
-              } ${
-                selectedMessage?.id === safeMsg.id
-                  ? "bg-blue-50 rounded-lg p-2"
-                  : ""
               }`}
-              onClick={() => handleMessageClick(safeMsg)}
             >
               {safeMsg.sender === "other" && (
                 <Avatar src={senderAvatar} size={40}>
@@ -429,21 +413,6 @@ function ChatRoom() {
                     : "bg-gray-200 text-black rounded-tl-none"
                 }`}
               >
-                {safeMsg.replyTo && (
-                  <div className="bg-gray-100 p-2 rounded-md mb-2 text-sm italic opacity-80">
-                    <p className="text-gray-600">
-                      {(() => {
-                        const replyMessage = messages.find(
-                          (m) => m.id === safeMsg.replyTo
-                        );
-                        return typeof replyMessage?.text === "string"
-                          ? replyMessage.text
-                          : "Original message";
-                      })()}
-                    </p>
-                  </div>
-                )}
-
                 {safeMsg.text && (
                   <p
                     className={`text-sm whitespace-pre-wrap ${
@@ -526,13 +495,7 @@ function ChatRoom() {
         })}
       </MessageErrorBoundary>
     );
-  }, [
-    messages,
-    selectedMessage,
-    user,
-    generateSafeImageUrl,
-    handleMessageClick,
-  ]);
+  }, [messages, user, generateSafeImageUrl]);
 
   // Load messages from API with pagination
   useEffect(() => {
@@ -556,6 +519,7 @@ function ChatRoom() {
             // First page - replace all messages
             setMessages(processedMessages);
             scrollToBottom();
+            isInitialLoadRef.current = false;
           } else {
             // Subsequent pages - prepend messages (older messages at top)
             setMessages((prevMessages) => {
@@ -567,16 +531,8 @@ function ChatRoom() {
               return [...newMessages, ...prevMessages];
             });
 
-            // Maintain scroll position after loading older messages
-            setTimeout(() => {
-              if (messagesContainerRef.current) {
-                const container = messagesContainerRef.current;
-                const newScrollHeight = container.scrollHeight;
-                const oldScrollHeight =
-                  container.scrollHeight - processedMessages.length * 100; // Approximate height per message
-                container.scrollTop = newScrollHeight - oldScrollHeight;
-              }
-            }, 100);
+            // Note: Removed scroll position maintenance to prevent shaking
+            // The browser will handle scroll position naturally
           }
         } else {
           console.error(
@@ -601,12 +557,28 @@ function ChatRoom() {
     setMessages([]);
     setShowLoadMore(false);
     setIsLoadingMore(false);
+    isLoadingMoreRef.current = false;
+    isInitialLoadRef.current = true;
+
+    // Clear any pending scroll timeouts
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
 
     // Set to 1 after a small delay to trigger the first page load
     setTimeout(() => {
       setCurrentPage(1);
     }, 100);
   }, [chatRoomId]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Modify error handling to be more verbose
   useEffect(() => {
@@ -630,10 +602,7 @@ function ChatRoom() {
     if (isLoadingMore || !hasMorePages) return;
 
     setIsLoadingMore(true);
-
-    // Store current scroll position
-    const container = messagesContainerRef.current;
-    const scrollHeight = container?.scrollHeight || 0;
+    isLoadingMoreRef.current = true;
 
     try {
       const nextPage = currentPage + 1;
@@ -646,15 +615,29 @@ function ChatRoom() {
       antMessage.error("Failed to load more messages");
     } finally {
       setIsLoadingMore(false);
+      isLoadingMoreRef.current = false;
     }
   };
 
   // Handle scroll to show/hide load more button
   const handleScroll = useCallback(() => {
-    if (messagesContainerRef.current) {
-      const { scrollTop } = messagesContainerRef.current;
-      setShowLoadMore(scrollTop < 100 && hasMorePages && !isLoadingMore);
+    // Skip if loading more messages or initial load
+    if (isLoadingMoreRef.current || isInitialLoadRef.current) return;
+
+    // Clear existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
+
+    // Debounce scroll events
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (messagesContainerRef.current) {
+        const { scrollTop } = messagesContainerRef.current;
+        const shouldShowLoadMore =
+          scrollTop < 100 && hasMorePages && !isLoadingMore;
+        setShowLoadMore(shouldShowLoadMore);
+      }
+    }, 200); // Increased debounce time further
   }, [hasMorePages, isLoadingMore]);
 
   // Handle typing indicators
@@ -721,7 +704,7 @@ function ChatRoom() {
         }),
         timestamp: new Date().toISOString(),
         status: "sent",
-        replyTo: selectedMessage ? selectedMessage.id : null,
+
         file: file
           ? {
               type: file.type.startsWith("image/") ? "image" : "file",
@@ -734,9 +717,8 @@ function ChatRoom() {
       // Send via socket for real-time updates
       socketSendMessage(socketMessage);
 
-      // Clear input and selected message
+      // Clear input and selected file
       setMessageText("");
-      setSelectedMessage(null);
       setSelectedFile(null); // Clear selected file
       setIsTyping(false);
       stopTyping();
@@ -865,28 +847,6 @@ function ChatRoom() {
         {renderMessages()}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Reply Preview */}
-      {selectedMessage && (
-        <div className="px-4 py-2 bg-blue-50 border-t">
-          <div className="flex justify-between items-center">
-            <div className="text-sm">
-              <span className="font-medium text-blue-600">Replying to:</span>
-              <p className="text-gray-600 truncate max-w-md">
-                {typeof selectedMessage.text === "string"
-                  ? selectedMessage.text
-                  : selectedMessage.file?.name || "Message"}
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedMessage(null)}
-              className="text-gray-500 hover:text-gray-700 font-bold"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* File Preview */}
       {selectedFile && (
